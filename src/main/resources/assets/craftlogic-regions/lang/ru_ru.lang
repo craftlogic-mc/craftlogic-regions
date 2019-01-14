@@ -1,0 +1,35 @@
+tooltip.region.owner=Владелец региона
+
+chat.region.edit.blocks=Вы не можете изменять здесь блоки!
+chat.region.attack.monsters=Вы не можете атаковать здесь монстров!
+chat.region.attack.animals=Вы не можете атаковать здесь животных!
+chat.region.attack.players=Вы не можете атаковать здесь игроков!
+chat.region.interact.blocks=Вы не можете взаимодействовать здесь с блоками!
+chat.region.interact.entities=Вы не можете взаимодействовать здесь с существами!
+chat.region.interact.potions=Вы не можете бросать здесь зелья!
+chat.region.interact.projectiles=Вы не можете бросать здесь снаряды!
+
+commands.region.not_owning=Вы не владеете этим регионом!
+commands.region.delete.question=Вы действительно хотие удалить этот регион?
+commands.region.delete.success=Регион успешно удалён. Остерегайтесь гриферов!
+commands.region.delete.failure=Ошибка удаления региона
+commands.region.create.intersects=Невозможно создать новый регион из-за пересечения с %d другим(и).
+commands.region.create.success=Вы успешно создали новый регион размером в %dx%d блоков!
+commands.region.create.failure=Ошибка создания региона
+commands.region.create.too_many=У вас слишком много регионов. Ваш лимит: %d
+commands.region.unknown=Неизвестный регион: %s
+commands.region.not_found=В вашей локации регионы отсутствуют
+commands.region.info.no_permission=У вас нет прав для просмотра информации о чужих приватах
+commands.region.info.owner=Владелец: %s
+commands.region.info.members=Иждивенцы: %s
+commands.region.yourself=Вы не можете указывать на самого себя!
+commands.region.expel.owner=Вы не можете выгнать владельца региона!
+commands.region.expel.question=Вы действительно хотите выгнать %s из данного региона?
+commands.region.expel.success=Вы успешно выгнали %s из данного региона!
+commands.region.expel.already=%s не является иждивенцем в вашем регионе!
+commands.region.abilities.unknown=Неизвестная привилегия: %s. Допустимые значения: %s
+commands.region.invite.already=%s уже приглашён в ваш регион!
+commands.region.invite.successful=Вы успешно пригласили игрока %s в свой регион!
+commands.region.pvp.on=Вы успешно включили PvP в этом регионе!
+commands.region.pvp.off=Вы успешно выключили PvP в этом регионе!
+commands.region.transfer.question=Вы действительно хотите передать права владения данным регионом игроку %s?

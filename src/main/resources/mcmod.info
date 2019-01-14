@@ -1,0 +1,14 @@
+[{
+  "modid": "$mod_id",
+  "name": "CraftLogic Regions",
+  "description": "Regions system for CraftLogic Core",
+  "version": "$mod_version",
+  "mcversion": "$mc_version",
+  "url": "https://minecraft.curseforge.com/projects/craftlogic-regions",
+  "updateUrl": "",
+  "authorList": ["Radviger"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}]
