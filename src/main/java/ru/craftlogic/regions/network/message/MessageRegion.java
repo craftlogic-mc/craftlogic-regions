@@ -37,7 +37,7 @@ public class MessageRegion extends AdvancedMessage {
             this.members.put(member == null ? new GameProfile(m, null) : member.getProfile(), region.getMemberAbilities(m));
         }
         Location center = region.getCenter();
-        this.dimension = center.getDimension();
+        this.dimension = center.getDimensionId();
         this.pos = center.getPos();
         this.width = (int) (Math.abs(region.getStartX() - region.getEndX()) / 2);
         this.depth = (int) (Math.abs(region.getStartZ() - region.getEndZ()) / 2);

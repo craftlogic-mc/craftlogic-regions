@@ -208,8 +208,8 @@ public class RegionManager extends ConfigurableManager {
     public void onPlayerMove(LivingEvent.LivingUpdateEvent event) {
         if (event.getEntityLiving() instanceof EntityPlayer && !event.getEntityLiving().getEntityWorld().isRemote) {
             EntityPlayer player = (EntityPlayer) event.getEntityLiving();
-            if (player.prevPosX != player.posX || player.prevPosY != player.posY || player.prevPosZ != player.posZ) {
-                Location oldLocation = new Location(player.world, player.prevPosX, player.prevPosY, player.prevPosZ);
+            if (player.prevChasingPosX != player.posX || player.prevChasingPosY != player.posY || player.prevChasingPosZ != player.posZ) {
+                Location oldLocation = new Location(player.world, player.prevChasingPosX, player.prevChasingPosY, player.prevChasingPosZ);
                 Location newLocation = new Location(player.world, player.posX, player.posY, player.posZ);
                 Region oldRegion = this.getRegion(oldLocation);
                 Region newRegion = this.getRegion(newLocation);

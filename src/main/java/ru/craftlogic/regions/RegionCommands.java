@@ -22,8 +22,8 @@ public class RegionCommands implements CommandRegistrar {
         name = "region",
         aliases = {"reg", "rg"},
         syntax = {
-            "[create|delete|pvp]",
-            "[expel|transfer] <target:OfflinePlayer>",
+            "create|delete|pvp",
+            "expel|transfer <target:OfflinePlayer>",
             "invite <target:OfflinePlayer>",
             "invite <target:OfflinePlayer> <abilities>...",
             "teleport <region:Region>",
@@ -35,8 +35,8 @@ public class RegionCommands implements CommandRegistrar {
     public static void commandRegion(CommandContext ctx) throws CommandException {
         Server server = ctx.server();
         RegionManager regionManager = server.getManager(RegionManager.class);
-        if (ctx.hasConstant()) {
-            switch (ctx.constant()) {
+        if (ctx.hasAction(0)) {
+            switch (ctx.action(0)) {
                 case "teleport": {
                     Player sender = ctx.senderAsPlayer();
                     UUID regionId = ctx.get("region").asUUID();
@@ -101,19 +101,16 @@ public class RegionCommands implements CommandRegistrar {
                     }
                     break;
                 }
-            }
-        } else if (ctx.has("target")) {
-            Player sender = ctx.senderAsPlayer();
-            OfflinePlayer target = ctx.get("target").asOfflinePlayer();
-            if (target == sender) {
-                throw new CommandException("commands.region.yourself");
-            }
-            Region region = regionManager.getRegion(sender.getLocation());
-            if (region == null) {
-                throw new CommandException("commands.region.not_found");
-            }
-            switch (ctx.action()) {
                 case "expel": {
+                    Player sender = ctx.senderAsPlayer();
+                    OfflinePlayer target = ctx.get("target").asOfflinePlayer();
+                    if (target == sender) {
+                        throw new CommandException("commands.region.yourself");
+                    }
+                    Region region = regionManager.getRegion(sender.getLocation());
+                    if (region == null) {
+                        throw new CommandException("commands.region.not_found");
+                    }
                     if (region.isOwner(sender) || sender.hasPermission("region.admin.expel")) {
                         if (region.isOwner(target)) {
                             throw new CommandException("commands.region.expel.owner");
@@ -126,6 +123,15 @@ public class RegionCommands implements CommandRegistrar {
                     break;
                 }
                 case "transfer": {
+                    Player sender = ctx.senderAsPlayer();
+                    OfflinePlayer target = ctx.get("target").asOfflinePlayer();
+                    if (target == sender) {
+                        throw new CommandException("commands.region.yourself");
+                    }
+                    Region region = regionManager.getRegion(sender.getLocation());
+                    if (region == null) {
+                        throw new CommandException("commands.region.not_found");
+                    }
                     if (!region.isOwner(sender) && !sender.hasPermission("region.admin.transfer")) {
                         throw new CommandException("commands.region.not_owning");
                     }
@@ -160,23 +166,22 @@ public class RegionCommands implements CommandRegistrar {
                     );
                     break;
                 }
-            }
-        } else if (ctx.hasAction()) {
-            Player sender = ctx.senderAsPlayer();
-            switch (ctx.action()) {
                 case "create": {
+                    Player sender = ctx.senderAsPlayer();
                     createRegion(sender, regionManager);
                     break;
                 }
                 case "delete": {
+                    Player sender = ctx.senderAsPlayer();
                     deleteRegion(sender, regionManager);
                     break;
                 }
                 case "pvp": {
+                    Player sender = ctx.senderAsPlayer();
                     Region region = regionManager.getRegion(sender.getLocation());
                     if (region != null) {
                         if (region.isOwner(sender) && sender.hasPermission("commands.region.pvp")
-                                || sender.hasPermission("commands.region.admin.pvp")) {
+                            || sender.hasPermission("commands.region.admin.pvp")) {
 
                             boolean pvp = !region.isPvP();
                             region.setPvP(pvp);
