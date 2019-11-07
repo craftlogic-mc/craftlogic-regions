@@ -28,6 +28,7 @@ public class CommandRegion extends CommandBase {
             "<region:Region>",
             ""
         );
+        Collections.addAll(aliases, "rg", "reg");
     }
 
     @Override
