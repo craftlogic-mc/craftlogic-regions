@@ -1,8 +1,9 @@
-package ru.craftlogic.regions;
+package ru.craftlogic.regions.common.command;
 
 import net.minecraft.command.CommandException;
 import net.minecraft.util.text.TextFormatting;
-import ru.craftlogic.api.command.*;
+import ru.craftlogic.api.command.CommandBase;
+import ru.craftlogic.api.command.CommandContext;
 import ru.craftlogic.api.server.PlayerManager;
 import ru.craftlogic.api.server.Server;
 import ru.craftlogic.api.text.Text;
@@ -10,18 +11,15 @@ import ru.craftlogic.api.world.CommandSender;
 import ru.craftlogic.api.world.LocatableCommandSender;
 import ru.craftlogic.api.world.OfflinePlayer;
 import ru.craftlogic.api.world.Player;
-import ru.craftlogic.regions.WorldRegionManager.Region;
-import ru.craftlogic.regions.WorldRegionManager.RegionAbility;
+import ru.craftlogic.regions.RegionManager;
+import ru.craftlogic.regions.WorldRegionManager;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
-public class RegionCommands implements CommandRegistrar {
-    @Command(
-        name = "region",
-        aliases = {"reg", "rg"},
-        syntax = {
+public class CommandRegion extends CommandBase {
+    public CommandRegion() {
+        super("region", 1,
             "create|delete|pvp",
             "expel|transfer <target:OfflinePlayer>",
             "invite <target:OfflinePlayer>",
@@ -29,10 +27,11 @@ public class RegionCommands implements CommandRegistrar {
             "teleport <region:Region>",
             "<region:Region>",
             ""
-        },
-        opLevel = 1
-    )
-    public static void commandRegion(CommandContext ctx) throws CommandException {
+        );
+    }
+
+    @Override
+    protected void execute(CommandContext ctx) throws Throwable {
         Server server = ctx.server();
         RegionManager regionManager = server.getManager(RegionManager.class);
         if (ctx.hasAction(0)) {
@@ -40,10 +39,10 @@ public class RegionCommands implements CommandRegistrar {
                 case "teleport": {
                     Player sender = ctx.senderAsPlayer();
                     UUID regionId = ctx.get("region").asUUID();
-                    Region region = regionManager.getRegion(regionId);
+                    WorldRegionManager.Region region = regionManager.getRegion(regionId);
                     if (region != null) {
                         if ((region.isOwner(sender) || region.isMember(sender)) && sender.hasPermission("commands.region.teleport")
-                                || sender.hasPermission("commands.region.admin.teleport")) {
+                            || sender.hasPermission("commands.region.admin.teleport")) {
 
                             sender.teleport(region.getCenter());
                         } else {
@@ -57,7 +56,7 @@ public class RegionCommands implements CommandRegistrar {
                 case "invite": {
                     Player sender = ctx.senderAsPlayer();
                     OfflinePlayer target = ctx.get("target").asOfflinePlayer();
-                    Region region = regionManager.getRegion(sender.getLocation());
+                    WorldRegionManager.Region region = regionManager.getRegion(sender.getLocation());
                     if (region != null) {
                         boolean admin = sender.hasPermission("region.admin.invite");
                         if (!region.isOwner(sender) && !region.isMember(sender) && !admin) {
@@ -66,15 +65,15 @@ public class RegionCommands implements CommandRegistrar {
                         if (target == sender && !admin) {
                             throw new CommandException("commands.region.yourself");
                         }
-                        Set<RegionAbility> abilities;
+                        Set<WorldRegionManager.RegionAbility> abilities;
                         if (ctx.has("abilities")) {
                             abilities = new HashSet<>();
                             for (String a : ctx.get("abilities").asString().split(",")) {
                                 try {
-                                    abilities.add(RegionAbility.valueOf(a.toUpperCase()));
+                                    abilities.add(WorldRegionManager.RegionAbility.valueOf(a.toUpperCase()));
                                 } catch (IllegalArgumentException e) {
                                     StringBuilder allowed = new StringBuilder();
-                                    for (RegionAbility ability : RegionAbility.values()) {
+                                    for (WorldRegionManager.RegionAbility ability : WorldRegionManager.RegionAbility.values()) {
                                         if (allowed.length() == 0) {
                                             allowed = new StringBuilder(ability.name().toLowerCase());
                                         } else {
@@ -85,7 +84,7 @@ public class RegionCommands implements CommandRegistrar {
                                 }
                             }
                         } else {
-                            abilities = EnumSet.allOf(RegionAbility.class);
+                            abilities = EnumSet.allOf(WorldRegionManager.RegionAbility.class);
                         }
                         if (region.isMember(target)) {
                             throw new CommandException("commands.region.invite.already", target.getName());
@@ -107,7 +106,7 @@ public class RegionCommands implements CommandRegistrar {
                     if (target == sender) {
                         throw new CommandException("commands.region.yourself");
                     }
-                    Region region = regionManager.getRegion(sender.getLocation());
+                    WorldRegionManager.Region region = regionManager.getRegion(sender.getLocation());
                     if (region == null) {
                         throw new CommandException("commands.region.not_found");
                     }
@@ -128,7 +127,7 @@ public class RegionCommands implements CommandRegistrar {
                     if (target == sender) {
                         throw new CommandException("commands.region.yourself");
                     }
-                    Region region = regionManager.getRegion(sender.getLocation());
+                    WorldRegionManager.Region region = regionManager.getRegion(sender.getLocation());
                     if (region == null) {
                         throw new CommandException("commands.region.not_found");
                     }
@@ -178,7 +177,7 @@ public class RegionCommands implements CommandRegistrar {
                 }
                 case "pvp": {
                     Player sender = ctx.senderAsPlayer();
-                    Region region = regionManager.getRegion(sender.getLocation());
+                    WorldRegionManager.Region region = regionManager.getRegion(sender.getLocation());
                     if (region != null) {
                         if (region.isOwner(sender) && sender.hasPermission("commands.region.pvp")
                             || sender.hasPermission("commands.region.admin.pvp")) {
@@ -198,7 +197,7 @@ public class RegionCommands implements CommandRegistrar {
             }
         } else {
             CommandSender sender;
-            Region region;
+            WorldRegionManager.Region region;
             if (ctx.has("region")) {
                 sender = ctx.sender();
                 region = regionManager.getRegion(ctx.get("region").asUUID());
@@ -224,24 +223,24 @@ public class RegionCommands implements CommandRegistrar {
         }
     }
 
-    private static void expel(Region region, Player sender, OfflinePlayer target) {
+    private static void expel(WorldRegionManager.Region region, Player sender, OfflinePlayer target) {
         sender.sendQuestion(
             "region.expel",
-                Text.translation("commands.region.expel.question"),
-                60,
-                confirmed -> {
-                    if (confirmed) {
-                        if (region.getMembers().remove(target.getId())) {
-                            sender.sendMessage(
-                                Text.translation("commands.region.expel.success").yellow()
-                            );
-                        } else {
-                            sender.sendMessage(
-                                Text.translation("commands.region.expel.already").red()
-                            );
-                        }
+            Text.translation("commands.region.expel.question"),
+            60,
+            confirmed -> {
+                if (confirmed) {
+                    if (region.getMembers().remove(target.getId())) {
+                        sender.sendMessage(
+                            Text.translation("commands.region.expel.success").yellow()
+                        );
+                    } else {
+                        sender.sendMessage(
+                            Text.translation("commands.region.expel.already").red()
+                        );
                     }
                 }
+            }
 
         );
     }
@@ -254,11 +253,11 @@ public class RegionCommands implements CommandRegistrar {
             throw new CommandException("commands.region.create.too_many", count);
         }
 
-        List<Region> regions = regionManager.getNearbyRegions(sender.getLocation(), size, size, false);
+        List<WorldRegionManager.Region> regions = regionManager.getNearbyRegions(sender.getLocation(), size, size, false);
         if (!regions.isEmpty()) {
             throw new CommandException("commands.region.create.intersects", regions.size());
         }
-        Region region = regionManager.createRegion(sender.getLocation(), sender, size, size);
+        WorldRegionManager.Region region = regionManager.createRegion(sender.getLocation(), sender, size, size);
         if (region != null) {
             sender.sendMessage(
                 Text.translation("commands.region.create.success").green()
@@ -271,7 +270,7 @@ public class RegionCommands implements CommandRegistrar {
     }
 
     private static void deleteRegion(Player sender, RegionManager regionManager) throws CommandException {
-        Region region = regionManager.getRegion(sender.getLocation());
+        WorldRegionManager.Region region = regionManager.getRegion(sender.getLocation());
         if (region != null) {
             if (region.isOwner(sender) || sender.hasPermission("region.admin.delete")) {
                 sender.sendQuestion(
@@ -298,7 +297,7 @@ public class RegionCommands implements CommandRegistrar {
         }
     }
 
-    private static void sendRegionInfo(Server server, CommandSender sender, Region region) throws CommandException {
+    private static void sendRegionInfo(Server server, CommandSender sender, WorldRegionManager.Region region) throws CommandException {
         PlayerManager playerManager = server.getPlayerManager();
         OfflinePlayer owner = playerManager.getOffline(region.getOwner());
         sender.sendMessage(Text.translation("commands.region.info.owner").arg(owner != null ? owner.getName() : region.getOwner().toString()));
@@ -310,16 +309,5 @@ public class RegionCommands implements CommandRegistrar {
         if (!members.isEmpty()) {
             sender.sendMessage(Text.translation("commands.region.info.members").arg(String.join(", ", members)));
         }
-    }
-
-    @ArgumentCompleter(type = "Region")
-    public static List<String> completerReg(ArgumentCompletionContext ctx) {
-        RegionManager regionManager = ctx.server().getManager(RegionManager.class);
-        CommandSender sender = ctx.sender();
-        return (sender instanceof Player ? regionManager.getPlayerRegions((Player) sender) : regionManager.getAllLoadedRegions())
-                .stream()
-                .map(Region::getId)
-                .map(UUID::toString)
-                .collect(Collectors.toList());
     }
 }

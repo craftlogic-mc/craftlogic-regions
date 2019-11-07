@@ -40,18 +40,17 @@ import ru.craftlogic.api.server.Server;
 import ru.craftlogic.api.server.WorldManager;
 import ru.craftlogic.api.text.Text;
 import ru.craftlogic.api.util.ConfigurableManager;
-import ru.craftlogic.api.world.Location;
-import ru.craftlogic.api.world.OfflinePlayer;
-import ru.craftlogic.api.world.Player;
-import ru.craftlogic.api.world.World;
+import ru.craftlogic.api.world.*;
 import ru.craftlogic.common.command.CommandManager;
 import ru.craftlogic.regions.WorldRegionManager.Region;
+import ru.craftlogic.regions.common.command.CommandRegion;
 import ru.craftlogic.regions.network.message.MessageRegion;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class RegionManager extends ConfigurableManager {
     private static final Logger LOGGER = LogManager.getLogger("RegionManager");
@@ -67,7 +66,16 @@ public class RegionManager extends ConfigurableManager {
 
     @Override
     public void registerCommands(CommandManager commandManager) {
-        commandManager.registerCommandContainer(RegionCommands.class);
+        commandManager.registerCommand(new CommandRegion());
+        commandManager.registerArgumentType("Region", false, ctx -> {
+            RegionManager regionManager = ctx.server().getManager(RegionManager.class);
+            CommandSender sender = ctx.sender();
+            return (sender instanceof Player ? regionManager.getPlayerRegions((Player) sender) : regionManager.getAllLoadedRegions())
+                .stream()
+                .map(WorldRegionManager.Region::getId)
+                .map(UUID::toString)
+                .collect(Collectors.toList());
+        });
     }
 
     @Override
