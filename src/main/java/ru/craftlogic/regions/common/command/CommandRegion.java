@@ -7,10 +7,7 @@ import ru.craftlogic.api.command.CommandContext;
 import ru.craftlogic.api.server.PlayerManager;
 import ru.craftlogic.api.server.Server;
 import ru.craftlogic.api.text.Text;
-import ru.craftlogic.api.world.CommandSender;
-import ru.craftlogic.api.world.LocatableCommandSender;
-import ru.craftlogic.api.world.OfflinePlayer;
-import ru.craftlogic.api.world.Player;
+import ru.craftlogic.api.world.*;
 import ru.craftlogic.regions.RegionManager;
 import ru.craftlogic.regions.WorldRegionManager;
 
@@ -20,7 +17,7 @@ import java.util.*;
 public class CommandRegion extends CommandBase {
     public CommandRegion() {
         super("region", 1,
-            "create|delete|pvp",
+            "delete|pvp",
             "expel|transfer <target:OfflinePlayer>",
             "invite <target:OfflinePlayer>",
             "invite <target:OfflinePlayer> <abilities>...",
@@ -45,7 +42,7 @@ public class CommandRegion extends CommandBase {
                         if ((region.isOwner(sender) || region.isMember(sender)) && sender.hasPermission("commands.region.teleport")
                             || sender.hasPermission("commands.region.admin.teleport")) {
 
-                            sender.teleport(region.getCenter());
+                            sender.teleport(region.getStart());
                         } else {
                             throw new CommandException("commands.region.not_owning");
                         }
@@ -95,6 +92,7 @@ public class CommandRegion extends CommandBase {
                                 Text.translation("commands.region.invite.successful").green()
                                     .arg(target.getName(), Text::darkGreen)
                             );
+                            regionManager.notifyRegionChange(region);
                         }
                     } else {
                         throw new CommandException("commands.region.not_found");
@@ -164,11 +162,6 @@ public class CommandRegion extends CommandBase {
                             }
                         }
                     );
-                    break;
-                }
-                case "create": {
-                    Player sender = ctx.senderAsPlayer();
-                    createRegion(sender, regionManager);
                     break;
                 }
                 case "delete": {
@@ -246,30 +239,6 @@ public class CommandRegion extends CommandBase {
         );
     }
 
-    private static void createRegion(Player sender, RegionManager regionManager) throws CommandException {
-        int size = sender.getPermissionMetadata("region.initial-size", 25, Integer::parseInt);
-        int count = sender.getPermissionMetadata("region.max-count", 5, Integer::parseInt);
-
-        if (regionManager.getPlayerRegions(sender).size() >= count) {
-            throw new CommandException("commands.region.create.too_many", count);
-        }
-
-        List<WorldRegionManager.Region> regions = regionManager.getNearbyRegions(sender.getLocation(), size, size, false);
-        if (!regions.isEmpty()) {
-            throw new CommandException("commands.region.create.intersects", regions.size());
-        }
-        WorldRegionManager.Region region = regionManager.createRegion(sender.getLocation(), sender, size, size);
-        if (region != null) {
-            sender.sendMessage(
-                Text.translation("commands.region.create.success").green()
-                    .arg(size, Text::darkGreen)
-                    .arg(size, Text::darkGreen)
-            );
-        } else {
-            throw new CommandException("commands.region.create.failure");
-        }
-    }
-
     private static void deleteRegion(Player sender, RegionManager regionManager) throws CommandException {
         WorldRegionManager.Region region = regionManager.getRegion(sender.getLocation());
         if (region != null) {
@@ -289,6 +258,12 @@ public class CommandRegion extends CommandBase {
                                     Text.translation("commands.region.delete.failure").red()
                                 );
                             }
+                            regionManager.setDirty(true);
+                            try {
+                                regionManager.save();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
                 );
@@ -298,7 +273,7 @@ public class CommandRegion extends CommandBase {
         }
     }
 
-    private static void sendRegionInfo(Server server, CommandSender sender, WorldRegionManager.Region region) throws CommandException {
+    public static void sendRegionInfo(Server server, CommandSender sender, WorldRegionManager.Region region) {
         PlayerManager playerManager = server.getPlayerManager();
         OfflinePlayer owner = playerManager.getOffline(region.getOwner());
         sender.sendMessage(Text.translation("commands.region.info.owner").arg(owner != null ? owner.getName() : region.getOwner().toString()));

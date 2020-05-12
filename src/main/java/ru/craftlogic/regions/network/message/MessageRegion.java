@@ -19,10 +19,9 @@ import java.util.*;
 public class MessageRegion extends AdvancedMessage {
     private UUID id;
     private int dimension;
-    private BlockPos pos;
+    private BlockPos start, end;
     private GameProfile owner;
     private Map<GameProfile, Set<RegionAbility>> members = new HashMap<>();
-    private int width, depth;
     private boolean pvp;
 
     public MessageRegion() {}
@@ -36,11 +35,11 @@ public class MessageRegion extends AdvancedMessage {
             OfflinePlayer member = playerManager.getOffline(m);
             this.members.put(member == null ? new GameProfile(m, null) : member.getProfile(), region.getMemberAbilities(m));
         }
-        Location center = region.getCenter();
-        this.dimension = center.getDimensionId();
-        this.pos = center.getPos();
-        this.width = (int) (Math.abs(region.getStartX() - region.getEndX()) / 2);
-        this.depth = (int) (Math.abs(region.getStartZ() - region.getEndZ()) / 2);
+        Location start = region.getStart();
+        Location end = region.getEnd();
+        this.dimension = start.getDimensionId();
+        this.start = start.getPos();
+        this.end = end.getPos();
         this.pvp = region.isPvP();
     }
 
@@ -67,18 +66,17 @@ public class MessageRegion extends AdvancedMessage {
             }
         }
         this.dimension = buf.readInt();
-        this.pos = buf.readBlockPos();
-        this.width = buf.readInt();
-        this.depth = buf.readInt();
+        this.start = buf.readBlockPos();
+        this.end = buf.readBlockPos();
         this.pvp = buf.readBoolean();
     }
 
     @Override
     protected void write(AdvancedBuffer buf) throws IOException {
-        buf.writeUniqueId(this.id);
-        buf.writeProfile(this.owner);
-        buf.writeInt(this.members.size());
-        for (Map.Entry<GameProfile, Set<RegionAbility>> entry : this.members.entrySet()) {
+        buf.writeUniqueId(id);
+        buf.writeProfile(owner);
+        buf.writeInt(members.size());
+        for (Map.Entry<GameProfile, Set<RegionAbility>> entry : members.entrySet()) {
             buf.writeProfile(entry.getKey());
             Set<RegionAbility> abilities = entry.getValue();
             buf.writeInt(abilities.size());
@@ -86,11 +84,10 @@ public class MessageRegion extends AdvancedMessage {
                 buf.writeEnumValue(ability);
             }
         }
-        buf.writeInt(this.dimension);
-        buf.writeBlockPos(this.pos);
-        buf.writeInt(this.width);
-        buf.writeInt(this.depth);
-        buf.writeBoolean(this.pvp);
+        buf.writeInt(dimension);
+        buf.writeBlockPos(start);
+        buf.writeBlockPos(end);
+        buf.writeBoolean(pvp);
     }
 
     public UUID getId() {
@@ -113,16 +110,12 @@ public class MessageRegion extends AdvancedMessage {
         return dimension;
     }
 
-    public BlockPos getPos() {
-        return pos;
+    public BlockPos getStart() {
+        return start;
     }
 
-    public int getWidth() {
-        return width;
-    }
-
-    public int getDepth() {
-        return depth;
+    public BlockPos getEnd() {
+        return end;
     }
 
     public boolean isPvP() {

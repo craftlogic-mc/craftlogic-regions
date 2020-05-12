@@ -35,6 +35,7 @@ import ru.craftlogic.api.event.block.FluidFlowEvent;
 import ru.craftlogic.api.event.block.PistonMoveEvent;
 import ru.craftlogic.api.event.player.PlayerCheckCanEditEvent;
 import ru.craftlogic.api.math.Bounding;
+import ru.craftlogic.api.math.BoxBounding;
 import ru.craftlogic.api.server.PlayerManager;
 import ru.craftlogic.api.server.Server;
 import ru.craftlogic.api.server.WorldManager;
@@ -102,13 +103,17 @@ public class RegionManager extends ConfigurableManager {
         }
     }
 
-    public Region createRegion(Location center, OfflinePlayer owner, int width, int depth) {
-        return createRegion(center, owner.getId(), width, depth);
+    public Region createRegion(Location start, Location end, OfflinePlayer owner) {
+        return createRegion(start, end, owner.getId());
     }
 
-    public Region createRegion(Location center, UUID owner, int width, int depth) {
-        WorldRegionManager manager = this.managers.get(center.getWorldName());
-        return manager.createRegion(center, owner, width, depth);
+    public Region createRegion(Location start, Location end, UUID owner) {
+        WorldRegionManager manager = this.managers.get(start.getWorldName());
+        Region region = manager.createRegion(start, end, owner);
+        if (region != null) {
+            notifyRegionChange(region);
+        }
+        return region;
     }
 
     public List<Region> getAllLoadedRegions() {
@@ -155,14 +160,14 @@ public class RegionManager extends ConfigurableManager {
         return null;
     }
 
-    public List<Region> getNearbyRegions(Location location, int width, int depth, boolean loadWorld) {
-        if (!location.isDimensionLoaded() && !loadWorld) {
+    public List<Region> getNearbyRegions(Location start, Location end, boolean loadWorld) {
+        if (!start.isDimensionLoaded() && !loadWorld) {
             return Collections.emptyList();
         }
-        WorldRegionManager manager = this.managers.get(location.getWorldName());
+        WorldRegionManager manager = this.managers.get(start.getWorldName());
         if (manager != null) {
             List<Region> result = new ArrayList<>();
-            Bounding origin = location.toFullHeightBounding(width, depth);
+            Bounding origin = new BoxBounding(start, end);
             for (Region region : manager.getAllRegions()) {
                 if (origin.isIntersects(region)) {
                     result.add(region);
@@ -229,6 +234,16 @@ public class RegionManager extends ConfigurableManager {
                         target.sendTitle(owner.getDisplayName(), new TextComponentTranslation("tooltip.region.owner"), 20, 20, 20);
                     }
                 }
+            }
+        }
+    }
+
+    public void notifyRegionChange(Region region) {
+        World world = World.fromVanilla(server, region.getStart().getWorld());
+        for (Player player : world.getPlayers()) {
+            Bounding bounding = getPlayerRegionBounding(player, 200);
+            if (bounding.isIntersects(region)) {
+                player.sendPacket(new MessageRegion(server, region));
             }
         }
     }

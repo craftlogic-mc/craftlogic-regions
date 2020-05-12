@@ -121,7 +121,7 @@ public class ProxyClient extends ProxyCommon {
     @SubscribeEvent
     public void onWorldRenderLast(RenderWorldLastEvent event) {
         if (this.client.gameSettings.showDebugInfo) {
-            this.client.mcProfiler.startSection("regions");
+            this.client.profiler.startSection("regions");
             GlStateManager.enableBlend();
             GlStateManager.blendFunc(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA);
             GlStateManager.color(1F, 1F, 1F, 1F);
@@ -160,7 +160,7 @@ public class ProxyClient extends ProxyCommon {
                 GlStateManager.depthMask(true);
             }
             GlStateManager.popMatrix();
-            this.client.mcProfiler.endSection();
+            this.client.profiler.endSection();
         }
     }
 
@@ -201,19 +201,17 @@ public class ProxyClient extends ProxyCommon {
 
     private class VisualRegion implements Bounding {
         private final UUID id;
-        private final BlockPos center;
+        private final BlockPos start, end;
         private final GameProfile owner;
         private final Set<GameProfile> members;
-        private final int width, depth;
         private boolean pvp, editBlocks, interactBlocks, interactEntities, launchProjectiles;
 
         public VisualRegion(MessageRegion message, Entity viewer) {
             this.id = message.getId();
-            this.center = message.getPos();
+            this.start = message.getStart();
+            this.end = message.getEnd();
             this.owner = message.getOwner();
             this.pvp = message.isPvP();
-            this.width = message.getWidth();
-            this.depth = message.getDepth();
             this.members = new HashSet<>(message.getMembers());
             if (viewer != null) {
                 for (GameProfile member : this.members) {
@@ -236,32 +234,32 @@ public class ProxyClient extends ProxyCommon {
 
         @Override
         public double getStartX() {
-            return this.center.getX() - this.width;
+            return Math.min(start.getX(), end.getX());
         }
 
         @Override
         public double getStartY() {
-            return 0;
+            return Math.min(start.getY(), end.getY());
         }
 
         @Override
         public double getStartZ() {
-            return this.center.getZ() - this.depth;
+            return Math.min(start.getZ(), end.getZ());
         }
 
         @Override
         public double getEndX() {
-            return this.center.getX() + this.width;
+            return Math.max(start.getX(), end.getX());
         }
 
         @Override
         public double getEndY() {
-            return 256;
+            return Math.max(start.getY(), end.getY());
         }
 
         @Override
         public double getEndZ() {
-            return this.center.getZ() + this.depth;
+            return Math.max(start.getZ(), end.getZ());
         }
 
         public void renderTextOverlay(Minecraft client, RenderGameOverlayEvent.Text event) {
@@ -279,17 +277,17 @@ public class ProxyClient extends ProxyCommon {
             EntityPlayer player = client.player;
             int posY = (int)(player.lastTickPosY + (player.posY - player.lastTickPosY) * partialTicks);
 
-            float sx = (float) this.getStartX();
-            float sy = (float) max(0, posY - 20);
-            float sz = (float) this.getStartZ();
-            float width = (float) (this.getEndX() - this.getStartX());
-            //float height = (float) (this.plot.end.posY - this.plot.start.posY);
-            float depth = (float) (this.getEndZ() - this.getStartZ());
+            float sx = (float) getStartX();
+            float sy = (float) max(getStartY(), posY - 20);
+            float sz = (float) getStartZ();
+            float width = (float) (getEndX() - getStartX());
+            float height = (float) (getEndY() - getStartY());
+            float depth = (float) (getEndZ() - getStartZ());
             float ex = sx + width + 1;
-            float ey = (float) min(256, posY + 20);
+            float ey = min(sy + height + 1, posY + 20);
             float ez = sz + depth + 1;
 
-            if (ey > sy) {
+            if (sy < 256) {
                 GlStateManager.pushMatrix();
 
                 double dx = -player.lastTickPosX - (-player.lastTickPosX + player.posX) * partialTicks;

@@ -3,10 +3,12 @@ package ru.craftlogic.regions.common;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
+import ru.craftlogic.api.CraftItems;
 import ru.craftlogic.api.event.server.ServerAddManagersEvent;
 import ru.craftlogic.api.network.AdvancedMessage;
 import ru.craftlogic.api.network.AdvancedMessageHandler;
 import ru.craftlogic.regions.RegionManager;
+import ru.craftlogic.regions.common.item.ItemWand;
 import ru.craftlogic.regions.network.message.MessageDeleteRegion;
 import ru.craftlogic.regions.network.message.MessageRegion;
 import ru.craftlogic.util.ReflectiveUsage;
@@ -16,7 +18,7 @@ import static ru.craftlogic.regions.CraftRegions.NETWORK;
 @ReflectiveUsage
 public class ProxyCommon extends AdvancedMessageHandler {
     public void preInit() {
-
+        CraftItems.registerItem(new ItemWand());
     }
 
     public void init() {

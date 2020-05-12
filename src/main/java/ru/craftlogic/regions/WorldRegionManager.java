@@ -50,12 +50,12 @@ public class WorldRegionManager extends ConfigurableManager {
         LOGGER.info("Saved {} regions for world {}", regions.size(), this.dimension.getName());
     }
 
-    public Region createRegion(Location center, UUID owner, int width, int depth) {
+    public Region createRegion(Location start, Location end, UUID owner) {
         UUID id;
-        while (this.regions.containsKey(id = UUID.randomUUID())) {}
-        Region region = new Region(id, owner, center, width, depth, false, new HashMap<>());
-        this.regions.put(id, region);
-        this.setDirty(true);
+        while (regions.containsKey(id = UUID.randomUUID())) {}
+        Region region = new Region(id, owner, start, end, false, new HashMap<>());
+        regions.put(id, region);
+        setDirty(true);
         return region;
     }
 
@@ -79,9 +79,9 @@ public class WorldRegionManager extends ConfigurableManager {
 
     public Region deleteRegion(UUID id) {
         Region region;
-        if ((region = this.regions.remove(id)) != null) {
-            this.server.broadcastPacket(new MessageDeleteRegion(id));
-            this.setDirty(true);
+        if ((region = regions.remove(id)) != null) {
+            server.broadcastPacket(new MessageDeleteRegion(id));
+            setDirty(true);
         }
         return region;
     }
@@ -103,27 +103,24 @@ public class WorldRegionManager extends ConfigurableManager {
         final UUID id;
         UUID owner;
         final Map<UUID, Set<RegionAbility>> members;
-        final Location center;
-        int width, depth;
+        final Location start, end;
         boolean pvp;
 
         public Region(Dimension dimension, UUID id, JsonObject root) {
             this(id,
                 UUID.fromString(JsonUtils.getString(root, "owner")),
-                Location.deserialize(dimension.getVanilla().getId(), root.getAsJsonObject("center")),
-                JsonUtils.getInt(root, "width"),
-                JsonUtils.getInt(root, "depth"),
+                Location.deserialize(dimension.getVanilla().getId(), root.getAsJsonObject("start")),
+                Location.deserialize(dimension.getVanilla().getId(), root.getAsJsonObject("end")),
                 JsonUtils.getBoolean(root, "pvp"),
                 root.has("members") ? parseMembers(JsonUtils.getJsonObject(root, "members")) : new HashMap<>()
             );
         }
 
-        public Region(UUID id, UUID owner, Location center, int width, int depth, boolean pvp, Map<UUID, Set<RegionAbility>> members) {
+        public Region(UUID id, UUID owner, Location start, Location end, boolean pvp, Map<UUID, Set<RegionAbility>> members) {
             this.id = id;
             this.owner = owner;
-            this.center = center;
-            this.width = width;
-            this.depth = depth;
+            this.start = start;
+            this.end = end;
             this.pvp = pvp;
             this.members = members;
         }
@@ -148,38 +145,42 @@ public class WorldRegionManager extends ConfigurableManager {
             return members.keySet();
         }
 
-        public Location getCenter() {
-            return center;
+        public Location getStart() {
+            return start;
+        }
+
+        public Location getEnd() {
+            return end;
         }
 
         @Override
         public double getStartX() {
-            return this.center.getBlockX() - this.width;
+            return Math.min(start.getBlockX(), end.getBlockX());
         }
 
         @Override
         public double getStartY() {
-            return 0;
+            return 0;//Math.min(start.getBlockY(), end.getBlockY());
         }
 
         @Override
         public double getStartZ() {
-            return this.center.getBlockZ() - this.depth;
+            return Math.min(start.getBlockZ(), end.getBlockZ());
         }
 
         @Override
         public double getEndX() {
-            return this.center.getBlockX() + this.width;
+            return Math.max(start.getBlockX(), end.getBlockX());
         }
 
         @Override
         public double getEndY() {
-            return this.center.getWorld().getHeight();
+            return 256;//Math.max(start.getBlockY(), end.getBlockY());
         }
 
         @Override
         public double getEndZ() {
-            return this.center.getBlockZ() + this.depth;
+            return Math.max(start.getBlockZ(), end.getBlockZ());
         }
 
         public boolean isMember(OfflinePlayer target) {
@@ -187,7 +188,7 @@ public class WorldRegionManager extends ConfigurableManager {
         }
 
         public boolean isMember(UUID target) {
-            return this.members.containsKey(target);
+            return members.containsKey(target);
         }
 
         public boolean isOwner(OfflinePlayer target) {
@@ -195,7 +196,7 @@ public class WorldRegionManager extends ConfigurableManager {
         }
 
         public boolean isOwner(UUID target) {
-            return this.owner.equals(target);
+            return owner.equals(target);
         }
 
         public void setOwner(OfflinePlayer target) {
@@ -203,7 +204,7 @@ public class WorldRegionManager extends ConfigurableManager {
         }
 
         public void setOwner(UUID target) {
-            this.owner = target;
+            owner = target;
         }
 
         public boolean canEditBlocks(OfflinePlayer target) {
@@ -294,9 +295,8 @@ public class WorldRegionManager extends ConfigurableManager {
         public JsonObject toJson() {
             JsonObject result = new JsonObject();
             result.addProperty("owner", this.owner.toString());
-            result.add("center", this.center.serialize());
-            result.addProperty("width", this.width);
-            result.addProperty("depth", this.depth);
+            result.add("start", this.start.serialize());
+            result.add("end", this.end.serialize());
             result.addProperty("pvp", this.pvp);
             if (!this.members.isEmpty()) {
                 JsonObject members = new JsonObject();

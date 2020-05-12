@@ -9,14 +9,21 @@ chat.region.interact.entities=You cannot interact with entities here!
 chat.region.interact.potions=You cannot throw potions here!
 chat.region.interact.projectiles=You cannot launch projectiles here!
 
+item.wand.name=Region Wand
+item.wand.first_point=First point: %s, %s, %s
+item.wand.tooltip=Right click to set a point
+item.wand.other_dimension=Cannot create region between dimensions
+
 commands.region.not_owning=You do not own this region!
 commands.region.delete.question=Do you really want to delete this region?
 commands.region.delete.success=Successfully deleted current region. Beware of griefers!
 commands.region.delete.failure=Region deletion failed
+commands.region.create.question=You are about to create a new region of size %s x %s. Proceed?
 commands.region.create.intersects=Cannot create new region because of interseciton with %d another(s).
 commands.region.create.success=You have successfully created a new region with size of %dx%d blocks!
 commands.region.create.failure=Region creation failed
-commands.region.create.too_many=You have too many regions. Your limit: %d
+commands.region.create.too_many=You have too many regions: %d > %d
+commands.region.create.too_large=Your region's area is tool large: %d > %d
 commands.region.unknown=Unknown region: %s
 commands.region.not_found=There is no region at your location!
 commands.region.info.no_permission=You do not have permission to view information about other players' regions
