@@ -270,6 +270,8 @@ public class CommandRegion extends CommandBase {
             } else {
                 throw new CommandException("commands.region.not_owning");
             }
+        } else {
+            throw new CommandException("commands.region.not_found");
         }
     }
 

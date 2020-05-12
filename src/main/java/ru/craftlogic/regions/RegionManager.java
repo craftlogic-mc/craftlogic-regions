@@ -45,6 +45,7 @@ import ru.craftlogic.api.world.*;
 import ru.craftlogic.common.command.CommandManager;
 import ru.craftlogic.regions.WorldRegionManager.Region;
 import ru.craftlogic.regions.common.command.CommandRegion;
+import ru.craftlogic.regions.common.command.CommandWand;
 import ru.craftlogic.regions.network.message.MessageRegion;
 
 import javax.annotation.Nullable;
@@ -68,6 +69,7 @@ public class RegionManager extends ConfigurableManager {
     @Override
     public void registerCommands(CommandManager commandManager) {
         commandManager.registerCommand(new CommandRegion());
+        commandManager.registerCommand(new CommandWand());
         commandManager.registerArgumentType("Region", false, ctx -> {
             RegionManager regionManager = ctx.server().getManager(RegionManager.class);
             CommandSender sender = ctx.sender();

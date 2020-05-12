@@ -214,19 +214,21 @@ public class ProxyClient extends ProxyCommon {
             this.pvp = message.isPvP();
             this.members = new HashSet<>(message.getMembers());
             if (viewer != null) {
-                for (GameProfile member : this.members) {
-                    if (Objects.equals(member.getId(), viewer.getUniqueID())) {
-                        Set<RegionAbility> abilities = message.getAbilities(member);
-                        this.editBlocks = abilities.contains(RegionAbility.EDIT_BLOCKS);
-                        this.interactBlocks = abilities.contains(RegionAbility.INTERACT_BLOCKS);
-                        this.interactEntities = abilities.contains(RegionAbility.INTERACT_ENTITIES);
-                        this.launchProjectiles = abilities.contains(RegionAbility.LAUNCH_PROJECTILES);
-                        break;
-                    } else if (Objects.equals(this.owner.getId(), viewer.getUniqueID())) {
-                        this.editBlocks = true;
-                        this.interactBlocks = true;
-                        this.interactEntities = true;
-                        this.launchProjectiles = true;
+                if (Objects.equals(this.owner.getId(), viewer.getUniqueID())) {
+                    this.editBlocks = true;
+                    this.interactBlocks = true;
+                    this.interactEntities = true;
+                    this.launchProjectiles = true;
+                } else {
+                    for (GameProfile member : this.members) {
+                        if (Objects.equals(member.getId(), viewer.getUniqueID())) {
+                            Set<RegionAbility> abilities = message.getAbilities(member);
+                            this.editBlocks = abilities.contains(RegionAbility.EDIT_BLOCKS);
+                            this.interactBlocks = abilities.contains(RegionAbility.INTERACT_BLOCKS);
+                            this.interactEntities = abilities.contains(RegionAbility.INTERACT_ENTITIES);
+                            this.launchProjectiles = abilities.contains(RegionAbility.LAUNCH_PROJECTILES);
+                            break;
+                        }
                     }
                 }
             }
@@ -239,7 +241,7 @@ public class ProxyClient extends ProxyCommon {
 
         @Override
         public double getStartY() {
-            return Math.min(start.getY(), end.getY());
+            return 0;//Math.min(start.getY(), end.getY());
         }
 
         @Override
@@ -254,7 +256,7 @@ public class ProxyClient extends ProxyCommon {
 
         @Override
         public double getEndY() {
-            return Math.max(start.getY(), end.getY());
+            return 256;//Math.max(start.getY(), end.getY());
         }
 
         @Override
