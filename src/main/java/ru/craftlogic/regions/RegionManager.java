@@ -16,6 +16,7 @@ import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.world.Explosion;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
@@ -23,6 +24,7 @@ import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.FillBucketEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.event.world.ExplosionEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -537,6 +539,24 @@ public class RegionManager extends ConfigurableManager {
                 to.spawnParticle(EnumParticleTypes.REDSTONE, x, y, z, 0, 0, 0);
             }
             event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public void onExplosionDetonate(ExplosionEvent.Detonate event) {
+        Explosion explosion = event.getExplosion();
+        event.getAffectedBlocks().removeIf(pos -> {
+            Location location = new Location(event.getWorld(), pos);
+            return !location.isAir() && getRegion(location) != null;
+        });
+        event.getAffectedEntities().removeIf(entity -> {
+            Location location = new Location(entity);
+            return !location.isAir() && getRegion(location) != null;
+        });
+        EntityLivingBase placer = explosion.getExplosivePlacedBy();
+        if (placer instanceof EntityPlayer) {
+            EntityPlayer player = (EntityPlayer) placer;
+            player.sendStatusMessage(Text.translation("chat.region.interact.blocks").darkRed().build(), true);
         }
     }
 }
