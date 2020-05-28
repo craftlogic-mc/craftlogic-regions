@@ -102,14 +102,15 @@ public class CommandRegion extends CommandBase {
                 case "expel": {
                     Player sender = ctx.senderAsPlayer();
                     OfflinePlayer target = ctx.get("target").asOfflinePlayer();
-                    if (target == sender) {
-                        throw new CommandException("commands.region.yourself");
-                    }
                     WorldRegionManager.Region region = regionManager.getRegion(sender.getLocation());
                     if (region == null) {
                         throw new CommandException("commands.region.not_found");
                     }
-                    if (region.isOwner(sender) || sender.hasPermission("region.admin.expel")) {
+                    boolean hasPermission = sender.hasPermission("region.admin.expel");
+                    if (region.isOwner(sender) || hasPermission) {
+                        if (target == sender && !hasPermission) {
+                            throw new CommandException("commands.region.yourself");
+                        }
                         if (region.isOwner(target)) {
                             throw new CommandException("commands.region.expel.owner");
                         } else {
@@ -220,17 +221,20 @@ public class CommandRegion extends CommandBase {
     private static void expel(WorldRegionManager.Region region, Player sender, OfflinePlayer target) {
         sender.sendQuestion(
             "region.expel",
-            Text.translation("commands.region.expel.question"),
+            Text.translation("commands.region.expel.question")
+                .arg(target.getName()),
             60,
             confirmed -> {
                 if (confirmed) {
                     if (region.getMembers().remove(target.getId())) {
                         sender.sendMessage(
                             Text.translation("commands.region.expel.success").yellow()
+                                .arg(target.getName(), Text::gold)
                         );
                     } else {
                         sender.sendMessage(
                             Text.translation("commands.region.expel.already").red()
+                                .arg(target.getName(), Text::darkRed)
                         );
                     }
                 }

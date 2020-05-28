@@ -22,6 +22,7 @@ import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.FillBucketEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.ExplosionEvent;
@@ -34,7 +35,7 @@ import org.apache.logging.log4j.Logger;
 import ru.craftlogic.api.event.block.DispenserShootEvent;
 import ru.craftlogic.api.event.block.FarmlandTrampleEvent;
 import ru.craftlogic.api.event.block.FluidFlowEvent;
-import ru.craftlogic.api.event.block.PistonMoveEvent;
+import ru.craftlogic.api.event.block.PistonCheckCanMoveEvent;
 import ru.craftlogic.api.event.player.PlayerCheckCanEditEvent;
 import ru.craftlogic.api.math.Bounding;
 import ru.craftlogic.api.math.BoxBounding;
@@ -228,8 +229,8 @@ public class RegionManager extends ConfigurableManager {
             if (player.prevChasingPosX != player.posX || player.prevChasingPosY != player.posY || player.prevChasingPosZ != player.posZ) {
                 Location oldLocation = new Location(player.world, player.prevChasingPosX, player.prevChasingPosY, player.prevChasingPosZ);
                 Location newLocation = new Location(player.world, player.posX, player.posY, player.posZ);
-                Region oldRegion = this.getRegion(oldLocation);
-                Region newRegion = this.getRegion(newLocation);
+                Region oldRegion = getRegion(oldLocation);
+                Region newRegion = getRegion(newLocation);
                 if (!Objects.equals(oldRegion, newRegion) && newRegion != null) {
                     PlayerManager playerManager = this.server.getPlayerManager();
                     OfflinePlayer owner = playerManager.getOffline(newRegion.getOwner());
@@ -324,7 +325,7 @@ public class RegionManager extends ConfigurableManager {
 
     private void checkBlocks(BlockEvent event, EntityPlayer player) {
         Location location = new Location(event.getWorld(), event.getPos());
-        Region region = this.getRegion(location);
+        Region region = getRegion(location);
         if (region != null && !region.canEditBlocks(player.getUniqueID())) {
             player.sendStatusMessage(Text.translation("chat.region.edit.blocks").darkRed().build(), true);
             event.setCanceled(true);
@@ -335,7 +336,7 @@ public class RegionManager extends ConfigurableManager {
     public void onCheckBlockModify(PlayerCheckCanEditEvent event) {
         EntityPlayer player = event.getEntityPlayer();
         Location location = new Location(player.getEntityWorld(), event.pos);
-        Region region = this.getRegion(location);
+        Region region = getRegion(location);
         if (region != null && !region.canEditBlocks(player.getUniqueID())) {
             event.setCanceled(true);
         }
@@ -356,7 +357,7 @@ public class RegionManager extends ConfigurableManager {
         net.minecraft.world.World world = event.getWorld();
         BlockPos pos = event.getPos();
         Location location = new Location(world, pos);
-        Region region = this.getRegion(location);
+        Region region = getRegion(location);
         if (region != null) {
             if (entity instanceof EntityPlayerMP) {
                 if (!region.canEditBlocks(entity.getUniqueID())) {
@@ -391,7 +392,7 @@ public class RegionManager extends ConfigurableManager {
         EntityLivingBase thrower = throwable.getThrower();
         if (target.entityHit != null) {
             if (thrower instanceof EntityPlayer) {
-                Region region = this.getRegion(new Location(target.entityHit));
+                Region region = getRegion(new Location(target.entityHit));
                 if (region != null) {
                     if (!region.canInteractEntities(thrower.getUniqueID())) {
                         event.setCanceled(true);
@@ -412,7 +413,7 @@ public class RegionManager extends ConfigurableManager {
             }
         } else if (throwable instanceof EntityPotion) {
             if (thrower instanceof EntityPlayer) {
-                Region region = this.getRegion(new Location(throwable));
+                Region region = getRegion(new Location(throwable));
                 if (region != null && !region.canLaunchProjectiles(thrower.getUniqueID())) {
                     event.setCanceled(true);
                     throwable.entityDropItem(((EntityPotion) throwable).getPotion(), 0F);
@@ -424,9 +425,9 @@ public class RegionManager extends ConfigurableManager {
     }
 
     private boolean checkAttack(EntityPlayer player, Entity target) {
-        Region targetRegion = this.getRegion(new Location(target));
+        Region targetRegion = getRegion(new Location(target));
         if (target instanceof EntityPlayer) {
-            Region fromRegion = this.getRegion(new Location(player));
+            Region fromRegion = getRegion(new Location(player));
             if (fromRegion != null && !fromRegion.isPvP() || targetRegion != null && !targetRegion.isPvP()) {
                 player.sendStatusMessage(Text.translation("chat.region.attack.players").darkRed().build(), true);
                 return true;
@@ -455,7 +456,7 @@ public class RegionManager extends ConfigurableManager {
         EntityPlayer player = event.getEntityPlayer();
         Location location = new Location(event.getWorld(), event.getPos());
         if (!location.isAir()) {
-            Region region = this.getRegion(location);
+            Region region = getRegion(location);
             if (region != null && !region.canInteractBlocks(player.getUniqueID())) {
                 event.setUseBlock(Event.Result.DENY);
                 player.sendStatusMessage(Text.translation("chat.region.interact.blocks").darkRed().build(), true);
@@ -468,7 +469,7 @@ public class RegionManager extends ConfigurableManager {
         EntityPlayer player = event.getEntityPlayer();
         Location location = new Location(event.getWorld(), event.getPos());
         if (!location.isAir()) {
-            Region region = this.getRegion(location);
+            Region region = getRegion(location);
             if (region != null && !region.canInteractBlocks(player.getUniqueID())) {
                 event.setUseBlock(Event.Result.DENY);
                 player.sendStatusMessage(Text.translation("chat.region.interact.blocks").darkRed().build(), true);
@@ -487,7 +488,7 @@ public class RegionManager extends ConfigurableManager {
     }
 
     private void checkEntityInteract(EntityPlayer player, Entity target, Event event) {
-        Region region = this.getRegion(new Location(target));
+        Region region = getRegion(new Location(target));
         if (region != null && !region.canInteractEntities(player.getUniqueID())) {
             event.setCanceled(true);
             player.sendStatusMessage(Text.translation("chat.region.interact.entities").darkRed().build(), true);
@@ -500,7 +501,7 @@ public class RegionManager extends ConfigurableManager {
         if (target != null) {
             Location location = new Location(event.getWorld(), target.getBlockPos());
             EntityPlayer player = event.getEntityPlayer();
-            Region region = this.getRegion(location);
+            Region region = getRegion(location);
             if (region != null && !region.canInteractBlocks(player.getUniqueID())) {
                 event.setResult(Event.Result.DENY);
                 event.setCanceled(true);
@@ -516,8 +517,63 @@ public class RegionManager extends ConfigurableManager {
     }
 
     @SubscribeEvent
-    public void onPistonMove(PistonMoveEvent event) {
-        onBlockFromTo(event, event.getWorld(), event.getPos(), event.getFacing(), true, null);
+    public void onPistonCheckCanMove(PistonCheckCanMoveEvent event) {
+        net.minecraft.world.WorldServer world = (WorldServer) event.getWorld();
+        Location pistonPos = new Location(world, event.getPistonPos());
+        Region pistonRegion = getRegion(pistonPos);
+        Location movePos = new Location(world, event.getBlockToMove());
+        Region moveRegion = getRegion(movePos);
+        if (moveRegion != null && moveRegion != pistonRegion) {
+            event.setResult(Event.Result.DENY);
+            world.addScheduledTask(() -> {
+                SPacketBlockChange packet = new SPacketBlockChange(pistonPos.getWorld(), pistonPos.getPos());
+                for (EntityPlayer player : world.playerEntities) {
+                    EntityPlayerMP p = (EntityPlayerMP) player;
+                    if (pistonPos.distanceSq(new Location(p)) <= 512) {
+                        p.connection.sendPacket(packet);
+                    }
+                }
+            });
+            return;
+        }
+        for (BlockPos pos : event.getToMove()) {
+            Location loc = new Location(world, pos);
+            Region reg = getRegion(loc);
+            if (reg != null && reg != pistonRegion) {
+                event.setResult(Event.Result.DENY);
+                world.addScheduledTask(() -> {
+                    for (BlockPos p : event.getToMove()) {
+                        SPacketBlockChange packet = new SPacketBlockChange(world, p);
+                        for (EntityPlayer player : world.playerEntities) {
+                            EntityPlayerMP pl = (EntityPlayerMP) player;
+                            if (p.distanceSq(pl.getPosition()) <= 512) {
+                                pl.connection.sendPacket(packet);
+                            }
+                        }
+                    }
+                });
+                return;
+            }
+        }
+        for (BlockPos pos : event.getToDestroy()) {
+            Location loc = new Location(world, pos);
+            Region reg = getRegion(loc);
+            if (reg != null && reg != pistonRegion) {
+                event.setResult(Event.Result.DENY);
+                world.addScheduledTask(() -> {
+                    for (BlockPos p : event.getToDestroy()) {
+                        SPacketBlockChange packet = new SPacketBlockChange(world, p);
+                        for (EntityPlayer player : world.playerEntities) {
+                            EntityPlayerMP pl = (EntityPlayerMP) player;
+                            if (p.distanceSq(pl.getPosition()) <= 512) {
+                                pl.connection.sendPacket(packet);
+                            }
+                        }
+                    }
+                });
+                return;
+            }
+        }
     }
 
     @SubscribeEvent
@@ -528,8 +584,8 @@ public class RegionManager extends ConfigurableManager {
     private void onBlockFromTo(Event event, net.minecraft.world.World world, BlockPos pos, EnumFacing facing, boolean multiParticles, @Nullable EntityPlayer player) {
         Location from = new Location(world, pos);
         Location to = from.offset(facing);
-        Region targetRegion = this.getRegion(to);
-        if (targetRegion != null && targetRegion != this.getRegion(from) && (player == null || !targetRegion.canInteractBlocks(player.getUniqueID()))) {
+        Region targetRegion = getRegion(to);
+        if (targetRegion != null && targetRegion != getRegion(from) && (player == null || !targetRegion.canInteractBlocks(player.getUniqueID()))) {
             Random rand = world.rand;
             int max = multiParticles ? 2 + rand.nextInt(3) : 1;
             for (int i = 0; i < max; i++) {
@@ -556,7 +612,17 @@ public class RegionManager extends ConfigurableManager {
         EntityLivingBase placer = explosion.getExplosivePlacedBy();
         if (placer instanceof EntityPlayer) {
             EntityPlayer player = (EntityPlayer) placer;
-            player.sendStatusMessage(Text.translation("chat.region.interact.blocks").darkRed().build(), true);
+            player.sendStatusMessage(Text.translation("chat.region.interact.explosions").darkRed().build(), true);
+        }
+    }
+
+    @SubscribeEvent
+    public void onBlockBreakSpeedCheck(PlayerEvent.BreakSpeed event) {
+        EntityPlayer player = event.getEntityPlayer();
+        Location location = new Location(player.world, event.getPos());
+        Region region = getRegion(location);
+        if (region != null && !region.canEditBlocks(player.getUniqueID())) {
+            event.setCanceled(true);
         }
     }
 }

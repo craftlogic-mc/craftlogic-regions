@@ -16,6 +16,7 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
@@ -24,6 +25,7 @@ import net.minecraft.world.GameType;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.client.FMLClientHandler;
@@ -120,8 +122,8 @@ public class ProxyClient extends ProxyCommon {
 
     @SubscribeEvent
     public void onWorldRenderLast(RenderWorldLastEvent event) {
-        if (this.client.gameSettings.showDebugInfo) {
-            this.client.profiler.startSection("regions");
+        if (client.gameSettings.showDebugInfo) {
+            client.profiler.startSection("regions");
             GlStateManager.enableBlend();
             GlStateManager.blendFunc(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA);
             GlStateManager.color(1F, 1F, 1F, 1F);
@@ -133,19 +135,19 @@ public class ProxyClient extends ProxyCommon {
             GlStateManager.enableTexture2D();
             GlStateManager.glLineWidth(3F);
 
-            if (this.showRegionsThroughBlocks) {
+            if (showRegionsThroughBlocks) {
                 GlStateManager.depthMask(false);
                 GlStateManager.disableDepth();
             }
 
-            for (VisualRegion region : this.regions.values()) {
-                region.renderVolumetric(this.client, event.getPartialTicks());
+            for (VisualRegion region : regions.values()) {
+                region.renderVolumetric(client, event.getPartialTicks());
             }
 
-            if (this.showRegionsThroughBlocks) {
+            if (showRegionsThroughBlocks) {
                 GlStateManager.enableDepth();
-                for (VisualRegion region : this.regions.values()) {
-                    region.renderVolumetric(this.client, event.getPartialTicks());
+                for (VisualRegion region : regions.values()) {
+                    region.renderVolumetric(client, event.getPartialTicks());
                 }
             }
 
@@ -156,11 +158,11 @@ public class ProxyClient extends ProxyCommon {
             GlStateManager.disablePolygonOffset();
             GlStateManager.enableAlpha();
 
-            if (this.showRegionsThroughBlocks) {
+            if (showRegionsThroughBlocks) {
                 GlStateManager.depthMask(true);
             }
             GlStateManager.popMatrix();
-            this.client.profiler.endSection();
+            client.profiler.endSection();
         }
     }
 
@@ -168,11 +170,11 @@ public class ProxyClient extends ProxyCommon {
     public void onBlockRightClick(PlayerInteractEvent.RightClickBlock event) {
         EntityPlayer player = event.getEntityPlayer();
         Location location = new Location(event.getWorld(), event.getPos());
-        if (location.isWorldRemote() && !location.isAir() && this.client.playerController.getCurrentGameType() != GameType.SPECTATOR) {
-            VisualRegion region = this.getRegion(location);
+        if (location.isWorldRemote() && !location.isAir() && client.playerController.getCurrentGameType() != GameType.SPECTATOR) {
+            VisualRegion region = getRegion(location);
             if (region != null && !region.interactBlocks && !region.owner.getId().equals(player.getUniqueID())) {
                 event.setUseBlock(Event.Result.DENY);
-                player.swingArm(event.getHand());
+                player.swingArm(EnumHand.MAIN_HAND);
                 player.sendStatusMessage(Text.translation("chat.region.interact.blocks").darkRed().build(), true);
 
                 Block block = location.getBlock();
@@ -190,11 +192,23 @@ public class ProxyClient extends ProxyCommon {
     public void onBlockLeftClick(PlayerInteractEvent.LeftClickBlock event) {
         EntityPlayer player = event.getEntityPlayer();
         Location location = new Location(event.getWorld(), event.getPos());
-        if (location.isWorldRemote() && !location.isAir() && this.client.playerController.getCurrentGameType() != GameType.SPECTATOR) {
-            VisualRegion region = this.getRegion(location);
+        if (location.isWorldRemote() && !location.isAir() && client.playerController.getCurrentGameType() != GameType.SPECTATOR) {
+            VisualRegion region = getRegion(location);
             if (region != null && !region.interactBlocks && !region.owner.getId().equals(player.getUniqueID())) {
                 event.setUseBlock(Event.Result.DENY);
                 player.sendStatusMessage(Text.translation("chat.region.interact.blocks").darkRed().build(), true);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onBlockBreakSpeedCheck(PlayerEvent.BreakSpeed event) {
+        EntityPlayer player = event.getEntityPlayer();
+        Location location = new Location(player.world, event.getPos());
+        if (location.isWorldRemote() && !location.isAir() && client.playerController.getCurrentGameType() != GameType.SPECTATOR) {
+            VisualRegion region = getRegion(location);
+            if (region != null && !region.interactBlocks && !region.owner.getId().equals(player.getUniqueID())) {
+                event.setCanceled(true);
             }
         }
     }

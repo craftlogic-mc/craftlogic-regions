@@ -8,6 +8,7 @@ chat.region.interact.blocks=You cannot interact with blocks here!
 chat.region.interact.entities=You cannot interact with entities here!
 chat.region.interact.potions=You cannot throw potions here!
 chat.region.interact.projectiles=You cannot launch projectiles here!
+chat.region.interact.explosions=You cannot explode anything here!
 
 item.wand.name=Region Wand
 item.wand.first_point=First point: %s, %s, %s
