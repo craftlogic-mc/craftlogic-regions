@@ -257,16 +257,15 @@ public class CommandRegion extends CommandBase {
                                 sender.sendMessage(
                                     Text.translation("commands.region.delete.success").yellow()
                                 );
+                                try {
+                                    regionManager.save(true);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
                             } else {
                                 sender.sendMessage(
                                     Text.translation("commands.region.delete.failure").red()
                                 );
-                            }
-                            regionManager.setDirty(true);
-                            try {
-                                regionManager.save();
-                            } catch (IOException e) {
-                                e.printStackTrace();
                             }
                         }
                     }

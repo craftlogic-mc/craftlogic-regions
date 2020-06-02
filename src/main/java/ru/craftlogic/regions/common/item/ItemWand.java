@@ -33,6 +33,7 @@ public class ItemWand extends ItemBase {
     public ItemWand() {
         super("wand", CreativeTabs.TOOLS);
         setMaxStackSize(1);
+        setMaxDamage(1);
     }
 
     public @Nullable Location getFirstPoint(ItemStack wand) {
@@ -148,6 +149,13 @@ public class ItemWand extends ItemBase {
                                     .arg(width, Text::darkGreen)
                                     .arg(depth, Text::darkGreen)
                             );
+                            EntityPlayerMP player = sender.getEntity();
+                            if (player != null) {
+                                ItemStack heldItem = player.getHeldItemMainhand();
+                                if (heldItem.getItem() instanceof ItemWand) {
+                                    heldItem.damageItem(1, player);
+                                }
+                            }
                         } else {
                             sender.sendStatus(Text.translation("commands.region.create.failure").red());
                         }

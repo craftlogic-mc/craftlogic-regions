@@ -86,9 +86,9 @@ public class RegionManager extends ConfigurableManager {
 
     @Override
     public void load(JsonObject regions) {
-        this.loaded = true;
+        loaded = true;
 
-        for (WorldRegionManager manager : this.managers.values()) {
+        for (WorldRegionManager manager : managers.values()) {
             try {
                 manager.load();
             } catch (IOException e) {
@@ -99,7 +99,7 @@ public class RegionManager extends ConfigurableManager {
 
     @Override
     public void save(JsonObject config) {
-        for (WorldRegionManager manager : this.managers.values()) {
+        for (WorldRegionManager manager : managers.values()) {
             try {
                 manager.save(true);
             } catch (IOException e) {
@@ -113,17 +113,22 @@ public class RegionManager extends ConfigurableManager {
     }
 
     public Region createRegion(Location start, Location end, UUID owner) {
-        WorldRegionManager manager = this.managers.get(start.getWorldName());
+        WorldRegionManager manager = managers.get(start.getWorldName());
         Region region = manager.createRegion(start, end, owner);
         if (region != null) {
             notifyRegionChange(region);
+            try {
+                manager.save(true);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         return region;
     }
 
     public List<Region> getAllLoadedRegions() {
         List<Region> result = new ArrayList<>();
-        for (WorldRegionManager manager : this.managers.values()) {
+        for (WorldRegionManager manager : managers.values()) {
             result.addAll(manager.getAllRegions());
         }
         return result;
@@ -131,7 +136,7 @@ public class RegionManager extends ConfigurableManager {
 
     public Region getRegion(UUID id) {
         Region result;
-        for (WorldRegionManager manager : this.managers.values()) {
+        for (WorldRegionManager manager : managers.values()) {
             if ((result = manager.getRegion(id)) != null) {
                 return result;
             }
@@ -145,7 +150,7 @@ public class RegionManager extends ConfigurableManager {
 
     public List<Region> getPlayerRegions(UUID owner) {
         List<Region> result;
-        for (WorldRegionManager manager : this.managers.values()) {
+        for (WorldRegionManager manager : managers.values()) {
             if ((result = manager.getPlayerRegions(owner)) != null) {
                 return result;
             }
@@ -154,7 +159,7 @@ public class RegionManager extends ConfigurableManager {
     }
 
     public Region getRegion(Location location) {
-        WorldRegionManager manager = this.managers.get(location.getWorldName());
+        WorldRegionManager manager = managers.get(location.getWorldName());
         if (manager != null) {
             for (Region region : manager.getAllRegions()) {
                 if (region.isOwning(location)) {
@@ -169,7 +174,7 @@ public class RegionManager extends ConfigurableManager {
         if (!start.isDimensionLoaded() && !loadWorld) {
             return Collections.emptyList();
         }
-        WorldRegionManager manager = this.managers.get(start.getWorldName());
+        WorldRegionManager manager = managers.get(start.getWorldName());
         if (manager != null) {
             List<Region> result = new ArrayList<>();
             Bounding origin = new BoxBounding(start, end);
@@ -185,7 +190,7 @@ public class RegionManager extends ConfigurableManager {
 
     public Region deleteRegion(UUID id) {
         Region region;
-        for (WorldRegionManager manager : this.managers.values()) {
+        for (WorldRegionManager manager : managers.values()) {
             if ((region = manager.deleteRegion(id)) != null) {
                 return region;
             }
@@ -195,11 +200,11 @@ public class RegionManager extends ConfigurableManager {
 
     @SubscribeEvent
     public void onWorldLoad(WorldEvent.Load event) {
-        World world = World.fromVanilla(this.server, event.getWorld());
+        World world = World.fromVanilla(server, event.getWorld());
         if (world != null) {
-            WorldRegionManager manager = new WorldRegionManager(this.server, world, LOGGER);
-            this.managers.put(world.getName(), manager);
-            if (this.loaded) {
+            WorldRegionManager manager = new WorldRegionManager(server, world, LOGGER);
+            managers.put(world.getName(), manager);
+            if (loaded) {
                 try {
                     manager.load();
                 } catch (IOException e) {
@@ -212,7 +217,7 @@ public class RegionManager extends ConfigurableManager {
     @SubscribeEvent
     public void onWorldUnload(WorldEvent.Unload event) {
         String worldName = event.getWorld().provider.getDimensionType().getName();
-        WorldRegionManager manager = this.managers.remove(worldName);
+        WorldRegionManager manager = managers.remove(worldName);
         if (manager != null) {
             try {
                 manager.save(true);
@@ -232,7 +237,7 @@ public class RegionManager extends ConfigurableManager {
                 Region oldRegion = getRegion(oldLocation);
                 Region newRegion = getRegion(newLocation);
                 if (!Objects.equals(oldRegion, newRegion) && newRegion != null) {
-                    PlayerManager playerManager = this.server.getPlayerManager();
+                    PlayerManager playerManager = server.getPlayerManager();
                     OfflinePlayer owner = playerManager.getOffline(newRegion.getOwner());
                     if (owner != null) {
                         Player target = Player.from((EntityPlayerMP) player);
@@ -255,10 +260,10 @@ public class RegionManager extends ConfigurableManager {
 
     @SubscribeEvent
     public void onServerTick(TickEvent.ServerTickEvent event) {
-        if (this.updateCounter++ >= SYNC_COOLDOWN) {
-            this.updateCounter = 0;
-            WorldManager worldManager = this.server.getWorldManager();
-            for (Map.Entry<String, WorldRegionManager> entry : this.managers.entrySet()) {
+        if (updateCounter++ >= SYNC_COOLDOWN) {
+            updateCounter = 0;
+            WorldManager worldManager = server.getWorldManager();
+            for (Map.Entry<String, WorldRegionManager> entry : managers.entrySet()) {
                 World world = worldManager.get(entry.getKey());
                 if (world != null) {
                     WorldRegionManager manager = entry.getValue();
@@ -271,7 +276,7 @@ public class RegionManager extends ConfigurableManager {
                             }
                         }
                         for (Region region : regions) {
-                            player.sendPacket(new MessageRegion(this.server, region));
+                            player.sendPacket(new MessageRegion(server, region));
                         }
                     }
                 }

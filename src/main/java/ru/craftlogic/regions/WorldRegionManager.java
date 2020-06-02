@@ -47,7 +47,7 @@ public class WorldRegionManager extends ConfigurableManager {
         for (Map.Entry<UUID, Region> entry : this.regions.entrySet()) {
             regions.add(entry.getKey().toString(), entry.getValue().toJson());
         }
-        LOGGER.info("Saved {} regions for world {}", regions.size(), this.dimension.getName());
+        LOGGER.info("Saved {} regions for world {}", this.regions.size(), this.dimension.getName());
     }
 
     public Region createRegion(Location start, Location end, UUID owner) {
@@ -64,12 +64,12 @@ public class WorldRegionManager extends ConfigurableManager {
     }
 
     public Region getRegion(UUID id) {
-        return this.regions.get(id);
+        return regions.get(id);
     }
 
     public List<Region> getPlayerRegions(UUID owner) {
         List<Region> result = new ArrayList<>();
-        for (Region region : this.regions.values()) {
+        for (Region region : regions.values()) {
             if (region.owner.equals(owner)) {
                 result.add(region);
             }
