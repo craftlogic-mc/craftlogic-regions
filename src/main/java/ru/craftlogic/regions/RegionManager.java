@@ -236,7 +236,7 @@ public class RegionManager extends ConfigurableManager {
                 Location newLocation = new Location(player.world, player.posX, player.posY, player.posZ);
                 Region oldRegion = getRegion(oldLocation);
                 Region newRegion = getRegion(newLocation);
-                if (!Objects.equals(oldRegion, newRegion) && newRegion != null) {
+                if (!Objects.equals(oldRegion, newRegion) && newRegion != null || oldRegion != null && newRegion != null && !Objects.equals(oldRegion.owner, newRegion.owner)) {
                     PlayerManager playerManager = server.getPlayerManager();
                     OfflinePlayer owner = playerManager.getOffline(newRegion.getOwner());
                     if (owner != null) {
