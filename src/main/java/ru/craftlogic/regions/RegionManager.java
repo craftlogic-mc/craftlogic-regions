@@ -327,7 +327,7 @@ public class RegionManager extends ConfigurableManager {
         Location location = new Location(event.getWorld(), event.getPos());
         Region region = getRegion(location);
         if (region != null && !region.canEditBlocks(player.getUniqueID())) {
-            player.sendStatusMessage(Text.translation("chat.region.edit.blocks").darkRed().build(), true);
+            player.sendStatusMessage(Text.translation("chat.region.edit.blocks").red().build(), true);
             event.setCanceled(true);
         }
     }
@@ -362,7 +362,7 @@ public class RegionManager extends ConfigurableManager {
             if (entity instanceof EntityPlayerMP) {
                 if (!region.canEditBlocks(entity.getUniqueID())) {
                     EntityPlayerMP player = (EntityPlayerMP) entity;
-                    player.sendStatusMessage(Text.translation("chat.region.edit.blocks").darkRed().build(), true);
+                    player.sendStatusMessage(Text.translation("chat.region.edit.blocks").red().build(), true);
                     player.connection.sendPacket(new SPacketBlockChange(world, pos));
                     event.setCanceled(true);
                 }
@@ -396,7 +396,7 @@ public class RegionManager extends ConfigurableManager {
                 if (region != null) {
                     if (!region.canInteractEntities(thrower.getUniqueID())) {
                         event.setCanceled(true);
-                        ((EntityPlayer) thrower).sendStatusMessage(Text.translation("chat.region.interact.entities").darkRed().build(), true);
+                        ((EntityPlayer) thrower).sendStatusMessage(Text.translation("chat.region.interact.entities").red().build(), true);
                         if (throwable instanceof EntityPotion) {
                             throwable.entityDropItem(((EntityPotion) throwable).getPotion(), 0F);
                         }
@@ -404,9 +404,9 @@ public class RegionManager extends ConfigurableManager {
                         event.setCanceled(true);
                         if (throwable instanceof EntityPotion) {
                             throwable.entityDropItem(((EntityPotion) throwable).getPotion(), 0F);
-                            ((EntityPlayer) thrower).sendStatusMessage(Text.translation("chat.region.interact.potions").darkRed().build(), true);
+                            ((EntityPlayer) thrower).sendStatusMessage(Text.translation("chat.region.interact.potions").red().build(), true);
                         } else {
-                            ((EntityPlayer) thrower).sendStatusMessage(Text.translation("chat.region.interact.projectiles").darkRed().build(), true);
+                            ((EntityPlayer) thrower).sendStatusMessage(Text.translation("chat.region.interact.projectiles").red().build(), true);
                         }
                     }
                 }
@@ -418,7 +418,7 @@ public class RegionManager extends ConfigurableManager {
                     event.setCanceled(true);
                     throwable.entityDropItem(((EntityPotion) throwable).getPotion(), 0F);
                     throwable.setDead();
-                    ((EntityPlayer) thrower).sendStatusMessage(Text.translation("chat.region.interact.potions").darkRed().build(), true);
+                    ((EntityPlayer) thrower).sendStatusMessage(Text.translation("chat.region.interact.potions").red().build(), true);
                 }
             }
         }
@@ -429,22 +429,22 @@ public class RegionManager extends ConfigurableManager {
         if (target instanceof EntityPlayer) {
             Region fromRegion = getRegion(new Location(player));
             if (fromRegion != null && !fromRegion.isPvP() || targetRegion != null && !targetRegion.isPvP()) {
-                player.sendStatusMessage(Text.translation("chat.region.attack.players").darkRed().build(), true);
+                player.sendStatusMessage(Text.translation("chat.region.attack.players").red().build(), true);
                 return true;
             }
         } else if (target instanceof IMob) {
             if (targetRegion != null && false /*&& !targetRegion.canAttackHostiles(player.getUniqueID())*/) {
-                player.sendStatusMessage(Text.translation("chat.region.attack.monsters").darkRed().build(), true);
+                player.sendStatusMessage(Text.translation("chat.region.attack.monsters").red().build(), true);
                 return true;
             }
         } else if (target instanceof IAnimals) {
             if (targetRegion != null && !targetRegion.canAttackNeutral(player.getUniqueID())) {
-                player.sendStatusMessage(Text.translation("chat.region.attack.animals").darkRed().build(), true);
+                player.sendStatusMessage(Text.translation("chat.region.attack.animals").red().build(), true);
                 return true;
             }
         } else {
             if (targetRegion != null && !targetRegion.canEditBlocks(player.getUniqueID())) {
-                player.sendStatusMessage(Text.translation("chat.region.edit.blocks").darkRed().build(), true);
+                player.sendStatusMessage(Text.translation("chat.region.edit.blocks").red().build(), true);
                 return true;
             }
         }
@@ -459,7 +459,7 @@ public class RegionManager extends ConfigurableManager {
             Region region = getRegion(location);
             if (region != null && !region.canInteractBlocks(player.getUniqueID())) {
                 event.setUseBlock(Event.Result.DENY);
-                player.sendStatusMessage(Text.translation("chat.region.interact.blocks").darkRed().build(), true);
+                player.sendStatusMessage(Text.translation("chat.region.interact.blocks").red().build(), true);
             }
         }
     }
@@ -472,7 +472,7 @@ public class RegionManager extends ConfigurableManager {
             Region region = getRegion(location);
             if (region != null && !region.canInteractBlocks(player.getUniqueID())) {
                 event.setUseBlock(Event.Result.DENY);
-                player.sendStatusMessage(Text.translation("chat.region.interact.blocks").darkRed().build(), true);
+                player.sendStatusMessage(Text.translation("chat.region.interact.blocks").red().build(), true);
             }
         }
     }
@@ -491,7 +491,7 @@ public class RegionManager extends ConfigurableManager {
         Region region = getRegion(new Location(target));
         if (region != null && !region.canInteractEntities(player.getUniqueID())) {
             event.setCanceled(true);
-            player.sendStatusMessage(Text.translation("chat.region.interact.entities").darkRed().build(), true);
+            player.sendStatusMessage(Text.translation("chat.region.interact.entities").red().build(), true);
         }
     }
 
@@ -505,7 +505,7 @@ public class RegionManager extends ConfigurableManager {
             if (region != null && !region.canInteractBlocks(player.getUniqueID())) {
                 event.setResult(Event.Result.DENY);
                 event.setCanceled(true);
-                player.sendStatusMessage(Text.translation("chat.region.interact.blocks").darkRed().build(), true);
+                player.sendStatusMessage(Text.translation("chat.region.interact.blocks").red().build(), true);
             }
         }
     }
@@ -612,7 +612,7 @@ public class RegionManager extends ConfigurableManager {
         EntityLivingBase placer = explosion.getExplosivePlacedBy();
         if (placer instanceof EntityPlayer) {
             EntityPlayer player = (EntityPlayer) placer;
-            player.sendStatusMessage(Text.translation("chat.region.interact.explosions").darkRed().build(), true);
+            player.sendStatusMessage(Text.translation("chat.region.interact.explosions").red().build(), true);
         }
     }
 

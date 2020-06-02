@@ -16,6 +16,8 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemBlock;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
@@ -42,6 +44,7 @@ import ru.craftlogic.api.text.Text;
 import ru.craftlogic.api.world.Location;
 import ru.craftlogic.regions.WorldRegionManager.RegionAbility;
 import ru.craftlogic.regions.common.ProxyCommon;
+import ru.craftlogic.regions.common.item.ItemWand;
 import ru.craftlogic.regions.network.message.MessageDeleteRegion;
 import ru.craftlogic.regions.network.message.MessageRegion;
 import ru.craftlogic.util.ReflectiveUsage;
@@ -122,7 +125,7 @@ public class ProxyClient extends ProxyCommon {
 
     @SubscribeEvent
     public void onWorldRenderLast(RenderWorldLastEvent event) {
-        if (client.gameSettings.showDebugInfo) {
+        if (client.player != null && client.player.getHeldItemMainhand().getItem() instanceof ItemWand) {
             client.profiler.startSection("regions");
             GlStateManager.enableBlend();
             GlStateManager.blendFunc(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA);
@@ -174,8 +177,12 @@ public class ProxyClient extends ProxyCommon {
             VisualRegion region = getRegion(location);
             if (region != null && !region.interactBlocks && !region.owner.getId().equals(player.getUniqueID())) {
                 event.setUseBlock(Event.Result.DENY);
+                ItemStack heldItem = event.getItemStack();
+                if (heldItem.getItem() instanceof ItemBlock) {
+                    event.setUseItem(Event.Result.DENY);
+                }
                 player.swingArm(EnumHand.MAIN_HAND);
-                player.sendStatusMessage(Text.translation("chat.region.interact.blocks").darkRed().build(), true);
+                player.sendStatusMessage(Text.translation("chat.region.interact.blocks").red().build(), true);
 
                 Block block = location.getBlock();
 
@@ -196,7 +203,7 @@ public class ProxyClient extends ProxyCommon {
             VisualRegion region = getRegion(location);
             if (region != null && !region.interactBlocks && !region.owner.getId().equals(player.getUniqueID())) {
                 event.setUseBlock(Event.Result.DENY);
-                player.sendStatusMessage(Text.translation("chat.region.interact.blocks").darkRed().build(), true);
+                player.sendStatusMessage(Text.translation("chat.region.interact.blocks").red().build(), true);
             }
         }
     }
