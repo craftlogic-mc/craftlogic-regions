@@ -153,7 +153,7 @@ public class ItemWand extends ItemBase {
                             if (player != null) {
                                 ItemStack heldItem = player.getHeldItemMainhand();
                                 if (heldItem.getItem() instanceof ItemWand) {
-                                    heldItem.damageItem(1, player);
+                                    heldItem.damageItem(2, player);
                                 }
                             }
                         } else {

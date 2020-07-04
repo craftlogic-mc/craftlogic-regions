@@ -27,6 +27,7 @@ commands.region.create.too_many=У вас слишком много регион
 commands.region.create.too_large=Площадь вашего региона слишком большая: %d > %d
 commands.region.unknown=Неизвестный регион: %s
 commands.region.not_found=В вашей локации регионы отсутствуют
+commands.region.claim_wand=Для создания региона используйте команду //wand
 commands.region.info.no_permission=У вас нет прав для просмотра информации о чужих приватах
 commands.region.info.owner=Владелец: %s
 commands.region.info.members=Иждивенцы: %s

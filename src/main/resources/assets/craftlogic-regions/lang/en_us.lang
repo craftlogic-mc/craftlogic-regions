@@ -27,6 +27,7 @@ commands.region.create.too_many=You have too many regions: %d > %d
 commands.region.create.too_large=Your region's area is tool large: %d > %d
 commands.region.unknown=Unknown region: %s
 commands.region.not_found=There is no region at your location!
+commands.region.claim_wand=To claim a region use //wand command
 commands.region.info.no_permission=You do not have permission to view information about other players' regions
 commands.region.info.owner=Owner: %s
 commands.region.info.members=Members: %s

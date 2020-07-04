@@ -22,6 +22,10 @@ public class CommandRegion extends CommandBase {
             "invite <target:OfflinePlayer>",
             "invite <target:OfflinePlayer> <abilities>...",
             "teleport <region:Region>",
+            "claim",
+            "claim <name>",
+            "info",
+            "info <region:Region>",
             "<region:Region>",
             ""
         );
@@ -189,32 +193,43 @@ public class CommandRegion extends CommandBase {
                     }
                     break;
                 }
+                case "claim": {
+                    throw new CommandException("commands.region.claim_wand");
+                }
+                case "info": {
+                    info(ctx, server, regionManager);
+                    break;
+                }
             }
         } else {
-            CommandSender sender;
-            WorldRegionManager.Region region;
-            if (ctx.has("region")) {
-                sender = ctx.sender();
-                region = regionManager.getRegion(ctx.get("region").asUUID());
-            } else {
-                sender = ctx.senderAsPlayer();
-                region = regionManager.getRegion(((LocatableCommandSender)sender).getLocation());
-            }
-            if (region != null) {
-                if (sender instanceof OfflinePlayer) {
-                    if (region.isOwner((OfflinePlayer) sender) || region.isMember((OfflinePlayer) sender)) {
-                        sendRegionInfo(server, sender, region);
-                    } else if (ctx.checkPermission(false, "commands.region.info.others", 2)) {
-                        sendRegionInfo(server, sender, region);
-                    } else {
-                        throw new CommandException("commands.region.info.no_permission");
-                    }
+            info(ctx, server, regionManager);
+        }
+    }
+
+    private static void info(CommandContext ctx, Server server, RegionManager regionManager) throws CommandException {
+        CommandSender sender;
+        WorldRegionManager.Region region;
+        if (ctx.has("region")) {
+            sender = ctx.sender();
+            region = regionManager.getRegion(ctx.get("region").asUUID());
+        } else {
+            sender = ctx.senderAsPlayer();
+            region = regionManager.getRegion(((LocatableCommandSender)sender).getLocation());
+        }
+        if (region != null) {
+            if (sender instanceof OfflinePlayer) {
+                if (region.isOwner((OfflinePlayer) sender) || region.isMember((OfflinePlayer) sender)) {
+                    sendRegionInfo(server, sender, region);
+                } else if (ctx.checkPermission(false, "commands.region.info.others", 2)) {
+                    sendRegionInfo(server, sender, region);
                 } else {
-                    sendRegionInfo(server, ctx.sender(), region);
+                    throw new CommandException("commands.region.info.no_permission");
                 }
             } else {
-                throw new CommandException("commands.region.not_found");
+                sendRegionInfo(server, ctx.sender(), region);
             }
+        } else {
+            throw new CommandException("commands.region.not_found");
         }
     }
 
