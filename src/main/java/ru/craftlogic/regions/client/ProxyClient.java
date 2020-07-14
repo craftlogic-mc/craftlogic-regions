@@ -300,12 +300,13 @@ public class ProxyClient extends ProxyCommon {
             EntityPlayer player = client.player;
             int posY = (int)(player.lastTickPosY + (player.posY - player.lastTickPosY) * partialTicks);
 
-            float sx = (float) getStartX();
-            float sy = (float) max(getStartY(), posY - 20);
-            float sz = (float) getStartZ();
-            float width = (float) (getEndX() - getStartX());
-            float height = (float) (getEndY() - getStartY());
-            float depth = (float) (getEndZ() - getStartZ());
+            float fixOffset = 0.1F;
+            float sx = (float) getStartX() + fixOffset;
+            float sy = (float) max(getStartY(), posY - 20) + fixOffset;
+            float sz = (float) getStartZ() + fixOffset;
+            float width = (float) (getEndX() - getStartX()) - 2 * fixOffset;
+            float height = (float) (getEndY() - getStartY()) - 2 * fixOffset;
+            float depth = (float) (getEndZ() - getStartZ()) - 2 * fixOffset;
             float ex = sx + width + 1;
             float ey = min(sy + height + 1, posY + 20);
             float ez = sz + depth + 1;
@@ -324,8 +325,6 @@ public class ProxyClient extends ProxyCommon {
 
                 Tessellator tess = Tessellator.getInstance();
                 GlStateManager.glLineWidth(2F);
-
-                float h = (ey - sy);
 
                 BufferBuilder buff = tess.getBuffer();
 
@@ -365,9 +364,6 @@ public class ProxyClient extends ProxyCommon {
                 buff.pos(sx, sy, ez).color(r, g, b, a).endVertex();
                 buff.pos(sx, ey, sz).color(r, g, b, a).endVertex();
                 buff.pos(sx, ey, ez).color(r, g, b, a).endVertex();
-
-                int dcs = (int) depth;
-                int wcs = (int) width;
 
                 tess.draw();
 
