@@ -178,7 +178,7 @@ public class CommandRegion extends CommandBase {
                     Player sender = ctx.senderAsPlayer();
                     WorldRegionManager.Region region = regionManager.getRegion(sender.getLocation());
                     if (region != null) {
-                        if (region.isOwner(sender) && sender.hasPermission("commands.region.pvp")
+                        if (region.isOwner(sender) && ctx.checkPermission(true, "commands.region.pvp", 1)
                             || sender.hasPermission("commands.region.admin.pvp")) {
 
                             boolean pvp = !region.isPvP();
