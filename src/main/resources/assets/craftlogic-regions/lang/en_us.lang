@@ -41,4 +41,6 @@ commands.region.invite.already=%s is already invited to your region!
 commands.region.invite.successful=You have successfully invited %s to your region!
 commands.region.pvp.on=You have successfully enabled PvP in this region!
 commands.region.pvp.off=You have successfully disabled PvP in this region!
+commands.region.explosions.on=You have successfully enabled explosions in this region!
+commands.region.explosions.off=You have successfully disabled explosions in this region!
 commands.region.transfer.question=Do you really want to transfer ownership of this region to %s?

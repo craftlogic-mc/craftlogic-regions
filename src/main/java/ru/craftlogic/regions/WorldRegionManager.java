@@ -53,7 +53,7 @@ public class WorldRegionManager extends ConfigurableManager {
     public Region createRegion(Location start, Location end, UUID owner) {
         UUID id;
         while (regions.containsKey(id = UUID.randomUUID())) {}
-        Region region = new Region(id, owner, start, end, false, new HashMap<>());
+        Region region = new Region(id, owner, start, end, false, false, new HashMap<>());
         regions.put(id, region);
         setDirty(true);
         return region;
@@ -104,24 +104,26 @@ public class WorldRegionManager extends ConfigurableManager {
         UUID owner;
         final Map<UUID, Set<RegionAbility>> members;
         final Location start, end;
-        boolean pvp;
+        boolean explosions, pvp;
 
         public Region(Dimension dimension, UUID id, JsonObject root) {
             this(id,
                 UUID.fromString(JsonUtils.getString(root, "owner")),
                 Location.deserialize(dimension.getVanilla().getId(), root.getAsJsonObject("start")),
                 Location.deserialize(dimension.getVanilla().getId(), root.getAsJsonObject("end")),
-                JsonUtils.getBoolean(root, "pvp"),
+                JsonUtils.getBoolean(root, "pvp", false),
+                JsonUtils.getBoolean(root, "explosions", false),
                 root.has("members") ? parseMembers(JsonUtils.getJsonObject(root, "members")) : new HashMap<>()
             );
         }
 
-        public Region(UUID id, UUID owner, Location start, Location end, boolean pvp, Map<UUID, Set<RegionAbility>> members) {
+        public Region(UUID id, UUID owner, Location start, Location end, boolean pvp, boolean explosions, Map<UUID, Set<RegionAbility>> members) {
             this.id = id;
             this.owner = owner;
             this.start = start;
             this.end = end;
             this.pvp = pvp;
+            this.explosions = explosions;
             this.members = members;
         }
 
@@ -292,12 +294,26 @@ public class WorldRegionManager extends ConfigurableManager {
             this.pvp = pvp;
         }
 
+        /**A better method name, maybe?*/
+        public boolean isExplosions() {
+            return explosions;
+        }
+
+        public void setExplosions(boolean explosions) {
+            this.explosions = explosions;
+        }
+
         public JsonObject toJson() {
             JsonObject result = new JsonObject();
-            result.addProperty("owner", this.owner.toString());
-            result.add("start", this.start.serialize());
-            result.add("end", this.end.serialize());
-            result.addProperty("pvp", this.pvp);
+            result.addProperty("owner", owner.toString());
+            result.add("start", start.serialize());
+            result.add("end", end.serialize());
+            if (pvp) {
+                result.addProperty("pvp", true);
+            }
+            if (explosions) {
+                result.addProperty("explosions", true);
+            }
             if (!this.members.isEmpty()) {
                 JsonObject members = new JsonObject();
                 for (Map.Entry<UUID, Set<RegionAbility>> entry : this.members.entrySet()) {

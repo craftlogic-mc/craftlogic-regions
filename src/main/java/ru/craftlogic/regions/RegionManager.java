@@ -606,16 +606,22 @@ public class RegionManager extends ConfigurableManager {
     @SubscribeEvent
     public void onExplosionDetonate(ExplosionEvent.Detonate event) {
         Explosion explosion = event.getExplosion();
-        event.getAffectedBlocks().removeIf(pos -> {
+        List<BlockPos> blocks = event.getAffectedBlocks();
+        List<Entity> entities = event.getAffectedEntities();
+        int bc = blocks.size();
+        int ec = entities.size();
+        blocks.removeIf(pos -> {
             Location location = new Location(event.getWorld(), pos);
-            return !location.isAir() && getRegion(location) != null;
+            Region region = getRegion(location);
+            return !location.isAir() && region != null && !region.explosions;
         });
-        event.getAffectedEntities().removeIf(entity -> {
+        entities.removeIf(entity -> {
             Location location = new Location(entity);
-            return !location.isAir() && getRegion(location) != null;
+            Region region = getRegion(location);
+            return region != null && (!(entity instanceof EntityPlayer) || !region.pvp || !region.explosions);
         });
         EntityLivingBase placer = explosion.getExplosivePlacedBy();
-        if (placer instanceof EntityPlayer) {
+        if (placer instanceof EntityPlayer && (bc != blocks.size() || ec != entities.size())) {
             EntityPlayer player = (EntityPlayer) placer;
             player.sendStatusMessage(Text.translation("chat.region.interact.explosions").red().build(), true);
         }

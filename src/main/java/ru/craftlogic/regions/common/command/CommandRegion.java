@@ -7,7 +7,10 @@ import ru.craftlogic.api.command.CommandContext;
 import ru.craftlogic.api.server.PlayerManager;
 import ru.craftlogic.api.server.Server;
 import ru.craftlogic.api.text.Text;
-import ru.craftlogic.api.world.*;
+import ru.craftlogic.api.world.CommandSender;
+import ru.craftlogic.api.world.LocatableCommandSender;
+import ru.craftlogic.api.world.OfflinePlayer;
+import ru.craftlogic.api.world.Player;
 import ru.craftlogic.regions.RegionManager;
 import ru.craftlogic.regions.WorldRegionManager;
 
@@ -17,7 +20,7 @@ import java.util.*;
 public class CommandRegion extends CommandBase {
     public CommandRegion() {
         super("region", 1,
-            "delete|pvp",
+            "delete|pvp|explosions",
             "expel|transfer <target:OfflinePlayer>",
             "invite <target:OfflinePlayer>",
             "invite <target:OfflinePlayer> <abilities>...",
@@ -172,6 +175,25 @@ public class CommandRegion extends CommandBase {
                 case "delete": {
                     Player sender = ctx.senderAsPlayer();
                     deleteRegion(sender, regionManager);
+                    break;
+                }
+                case "explosions": {
+                    Player sender = ctx.senderAsPlayer();
+                    WorldRegionManager.Region region = regionManager.getRegion(sender.getLocation());
+                    if (region != null) {
+                        if (region.isOwner(sender) && ctx.checkPermission(true, "commands.region.explosions", 1)
+                            || sender.hasPermission("commands.region.admin.explosions")) {
+
+                            boolean explosions = !region.isExplosions();
+                            region.setExplosions(explosions);
+                            region.getManager().setDirty(true);
+                            sender.sendMessage(Text.translation("commands.region.explosions." + (explosions ? "on" : "off")).color(explosions ? TextFormatting.RED : TextFormatting.GREEN));
+                        } else {
+                            throw new CommandException("commands.region.not_owning");
+                        }
+                    } else {
+                        throw new CommandException("commands.region.not_found");
+                    }
                     break;
                 }
                 case "pvp": {

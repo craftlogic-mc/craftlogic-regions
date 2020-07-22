@@ -41,4 +41,6 @@ commands.region.invite.already=%s уже приглашён в ваш регио
 commands.region.invite.successful=Вы успешно пригласили игрока %s в свой регион!
 commands.region.pvp.on=Вы успешно включили PvP в этом регионе!
 commands.region.pvp.off=Вы успешно выключили PvP в этом регионе!
+commands.region.explosions.on=Вы успешно включили взрывы в этом регионе!
+commands.region.explosions.off=Вы успешно выключили взрывы в этом регионе!
 commands.region.transfer.question=Вы действительно хотите передать права владения данным регионом игроку %s?
