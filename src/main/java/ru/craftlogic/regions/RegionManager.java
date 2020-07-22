@@ -10,7 +10,10 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.projectile.EntityArrow;
 import net.minecraft.entity.projectile.EntityPotion;
 import net.minecraft.entity.projectile.EntityThrowable;
+import net.minecraft.item.ItemStack;
 import net.minecraft.network.play.server.SPacketBlockChange;
+import net.minecraft.util.DamageSource;
+import net.minecraft.util.EntityDamageSourceIndirect;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.BlockPos;
@@ -19,6 +22,7 @@ import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.FillBucketEvent;
@@ -46,6 +50,7 @@ import ru.craftlogic.api.text.Text;
 import ru.craftlogic.api.util.ConfigurableManager;
 import ru.craftlogic.api.world.*;
 import ru.craftlogic.common.command.CommandManager;
+import ru.craftlogic.common.entity.projectile.EntityThrownItem;
 import ru.craftlogic.regions.WorldRegionManager.Region;
 import ru.craftlogic.regions.common.command.CommandRegion;
 import ru.craftlogic.regions.common.command.CommandWand;
@@ -348,6 +353,18 @@ public class RegionManager extends ConfigurableManager {
     }
 
     @SubscribeEvent
+    public void onLivingAttack(LivingAttackEvent event) {
+        EntityLivingBase victim = event.getEntityLiving();
+        DamageSource source = event.getSource();
+        if (source instanceof EntityDamageSourceIndirect) {
+            Entity attacker = source.getTrueSource();
+            if (attacker instanceof EntityPlayer && checkAttack(((EntityPlayer) attacker), victim)) {
+                event.setCanceled(true);
+            }
+        }
+    }
+
+    @SubscribeEvent
     public void onEntityAttack(AttackEntityEvent event) {
         EntityPlayer player = event.getEntityPlayer();
         Entity target = event.getTarget();
@@ -404,26 +421,42 @@ public class RegionManager extends ConfigurableManager {
                         ((EntityPlayer) thrower).sendStatusMessage(Text.translation("chat.region.interact.entities").red().build(), true);
                         if (throwable instanceof EntityPotion) {
                             throwable.entityDropItem(((EntityPotion) throwable).getPotion(), 0F);
+                            throwable.setDead();
+                        } else if (throwable instanceof EntityThrownItem) {
+                            throwable.entityDropItem(((EntityThrownItem) throwable).getItem(), 0F);
+                            ((EntityThrownItem) throwable).setItem(ItemStack.EMPTY);
+                            throwable.setDead();
                         }
                     } else if (!region.canLaunchProjectiles(thrower.getUniqueID())) {
                         event.setCanceled(true);
                         if (throwable instanceof EntityPotion) {
                             throwable.entityDropItem(((EntityPotion) throwable).getPotion(), 0F);
+                            throwable.setDead();
                             ((EntityPlayer) thrower).sendStatusMessage(Text.translation("chat.region.interact.potions").red().build(), true);
                         } else {
+                            if (throwable instanceof EntityThrownItem) {
+                                throwable.entityDropItem(((EntityThrownItem) throwable).getItem(), 0F);
+                                ((EntityThrownItem) throwable).setItem(ItemStack.EMPTY);
+                                throwable.setDead();
+                            }
                             ((EntityPlayer) thrower).sendStatusMessage(Text.translation("chat.region.interact.projectiles").red().build(), true);
                         }
                     }
                 }
             }
-        } else if (throwable instanceof EntityPotion) {
-            if (thrower instanceof EntityPlayer) {
-                Region region = getRegion(new Location(throwable));
-                if (region != null && !region.canLaunchProjectiles(thrower.getUniqueID())) {
+        } else if (thrower instanceof EntityPlayer) {
+            Region region = getRegion(new Location(throwable));
+            if (region != null && !region.canLaunchProjectiles(thrower.getUniqueID())) {
+                if (throwable instanceof EntityPotion) {
                     event.setCanceled(true);
                     throwable.entityDropItem(((EntityPotion) throwable).getPotion(), 0F);
                     throwable.setDead();
                     ((EntityPlayer) thrower).sendStatusMessage(Text.translation("chat.region.interact.potions").red().build(), true);
+                } else if (throwable instanceof EntityThrownItem) {
+                    throwable.entityDropItem(((EntityThrownItem) throwable).getItem(), 0F);
+                    ((EntityThrownItem) throwable).setItem(ItemStack.EMPTY);
+                    throwable.setDead();
+                    ((EntityPlayer) thrower).sendStatusMessage(Text.translation("chat.region.interact.projectiles").red().build(), true);
                 }
             }
         }
