@@ -208,7 +208,7 @@ public class RegionManager extends ConfigurableManager {
         World world = World.fromVanilla(server, event.getWorld());
         if (world != null) {
             WorldRegionManager manager = new WorldRegionManager(server, world, LOGGER);
-            managers.put(world.getName(), manager);
+            managers.put(world.getDimension().getVanilla().getName(), manager);
             if (loaded) {
                 try {
                     manager.load();
