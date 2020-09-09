@@ -149,13 +149,6 @@ public class ItemWand extends ItemBase {
                                     .arg(width, Text::darkGreen)
                                     .arg(depth, Text::darkGreen)
                             );
-                            EntityPlayerMP player = sender.getEntity();
-                            if (player != null) {
-                                ItemStack heldItem = player.getHeldItemMainhand();
-                                if (heldItem.getItem() instanceof ItemWand) {
-                                    heldItem.damageItem(2, player);
-                                }
-                            }
                         } else {
                             sender.sendStatus(Text.translation("commands.region.create.failure").red());
                         }
