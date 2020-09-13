@@ -91,7 +91,7 @@ public class CommandRegion extends CommandBase {
                         } else {
                             abilities = EnumSet.allOf(WorldRegionManager.RegionAbility.class);
                         }
-                        if (region.isMember(target)) {
+                        if (region.isMember(target) || region.isOwner(target)) {
                             throw new CommandException("commands.region.invite.already", target.getName());
                         } else {
                             region.setMemberAbilities(target, abilities);
@@ -118,7 +118,7 @@ public class CommandRegion extends CommandBase {
                         if (target == sender && !hasPermission) {
                             throw new CommandException("commands.region.yourself");
                         }
-                        if (region.isOwner(target)) {
+                        if (region.isOwner(target) && !region.isMember(target)) {
                             throw new CommandException("commands.region.expel.owner");
                         } else {
                             expel(region, sender, target);
