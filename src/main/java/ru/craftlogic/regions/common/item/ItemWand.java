@@ -12,6 +12,7 @@ import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -61,6 +62,7 @@ public class ItemWand extends ItemBase {
             tooltip.add(I18n.format("item.wand.first_point", x, y, z));
         }
         tooltip.add(I18n.format("item.wand.tooltip"));
+        tooltip.add(TextFormatting.RED + I18n.format("item.wand.tooltip.columns"));
     }
 
     @Override

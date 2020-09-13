@@ -1,5 +1,6 @@
 tooltip.region.owner=Region owner
 
+chat.region.wand=Use right click on block to start region selection. Don not build block columns!
 chat.region.edit.blocks=You cannot edit blocks here!
 chat.region.attack.monsters=You cannot attack monsters here!
 chat.region.attack.animals=You cannot attack animals here!
@@ -13,6 +14,7 @@ chat.region.interact.explosions=You cannot explode anything here!
 item.wand.name=Region Wand
 item.wand.first_point=First point: %s, %s, %s
 item.wand.tooltip=Right click to set a point
+item.wand.tooltip.columns=Do not build block columns!
 item.wand.other_dimension=Cannot create region between dimensions
 
 commands.region.not_owning=You do not own this region!

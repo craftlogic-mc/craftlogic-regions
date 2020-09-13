@@ -6,6 +6,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import ru.craftlogic.api.command.CommandBase;
 import ru.craftlogic.api.command.CommandContext;
+import ru.craftlogic.api.text.Text;
 import ru.craftlogic.api.world.Player;
 import ru.craftlogic.regions.CraftRegions;
 
@@ -23,5 +24,6 @@ public class CommandWand extends CommandBase {
         EntityPlayerMP entity = player.getEntity();
         ItemStack wand = new ItemStack(Item.REGISTRY.getObject(new ResourceLocation(CraftRegions.MOD_ID, "wand")));
         entity.inventory.addItemStackToInventory(wand);
+        player.sendMessage(Text.translation("chat.region.wand").green());
     }
 }
