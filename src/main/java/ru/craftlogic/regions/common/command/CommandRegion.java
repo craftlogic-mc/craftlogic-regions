@@ -64,7 +64,7 @@ public class CommandRegion extends CommandBase {
                     WorldRegionManager.Region region = regionManager.getRegion(sender.getLocation());
                     if (region != null) {
                         boolean admin = sender.hasPermission("region.admin.invite");
-                        if (!region.isOwner(sender) && !region.isMember(sender) && !admin) {
+                        if (!region.isOwner(sender) && !admin) {
                             throw new CommandException("commands.region.not_owning");
                         }
                         if (target == sender && !admin) {
