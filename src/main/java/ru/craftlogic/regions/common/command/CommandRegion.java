@@ -141,35 +141,52 @@ public class CommandRegion extends CommandBase {
                     if (!region.isOwner(sender) && !sender.hasPermission("region.admin.transfer")) {
                         throw new CommandException("commands.region.not_owning");
                     }
-                    sender.sendQuestion(
-                        "region.transfer",
-                        Text.translation("commands.region.transfer.question"),
-                        60,
-                        confirmed -> {
-                            if (confirmed) {
-                                region.setOwner(target);
-                                sender.sendMessage(
-                                    Text.translation("commands.region.transfer.successful").yellow()
-                                        .arg(target.getName(), Text::gold)
-                                );
-                                if (target.isOnline()) {
-                                    target.asOnline().sendMessage(
-                                        Text.translation("commands.region.transfer.received").green()
-                                            .arg(sender.getName(), Text::darkGreen)
-                                            .arg("commands.region.transfer.received.target", t ->
-                                                t.darkGreen().runCommand("/region teleport " + region.getId())
-                                            )
+                    List<WorldRegionManager.Region> alreadyOwnedRegions = regionManager.getPlayerRegions(target);
+                    int maxCount = target.getPermissionMetadata("region.max-maxCount", 5, Integer::parseInt);
+                    int maxArea = target.getPermissionMetadata("region.max-area", 100 * 100, Integer::parseInt);
+                    if (alreadyOwnedRegions.size() >= maxCount) {
+                        sender.sendMessage(
+                            Text.translation("commands.region.transfer.max_count").red()
+                                .arg(alreadyOwnedRegions.size(), Text::darkRed)
+                                .arg(maxCount, Text::darkRed)
+                        );
+                    } else if (region.getArea() >= maxArea) {
+                        sender.sendMessage(
+                            Text.translation("commands.region.transfer.max_area").red()
+                                .arg((int) region.getArea(), Text::darkRed)
+                                .arg(maxArea, Text::darkRed)
+                        );
+                    } else {
+                        sender.sendQuestion(
+                            "region.transfer",
+                            Text.translation("commands.region.transfer.question"),
+                            60,
+                            confirmed -> {
+                                if (confirmed) {
+                                    region.setOwner(target);
+                                    sender.sendMessage(
+                                        Text.translation("commands.region.transfer.successful").yellow()
+                                            .arg(target.getName(), Text::gold)
                                     );
-                                }
-                                regionManager.setDirty(true);
-                                try {
-                                    regionManager.save();
-                                } catch (IOException e) {
-                                    e.printStackTrace();
+                                    if (target.isOnline()) {
+                                        target.asOnline().sendMessage(
+                                            Text.translation("commands.region.transfer.received").green()
+                                                .arg(sender.getName(), Text::darkGreen)
+                                                .argTranslate("commands.region.transfer.received.target", t ->
+                                                    t.darkGreen().runCommand("/region teleport " + region.getId())
+                                                )
+                                        );
+                                    }
+                                    regionManager.setDirty(true);
+                                    try {
+                                        regionManager.save();
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
                                 }
                             }
-                        }
-                    );
+                        );
+                    }
                     break;
                 }
                 case "delete": {

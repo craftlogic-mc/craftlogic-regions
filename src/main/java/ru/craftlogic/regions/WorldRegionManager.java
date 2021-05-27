@@ -155,6 +155,14 @@ public class WorldRegionManager extends ConfigurableManager {
             return end;
         }
 
+        public double getArea() {
+            return (getEndX() - getStartX()) * (getEndZ() - getStartZ());
+        }
+
+        public double getVolume() {
+            return getArea() * (getEndY() - getStartY());
+        }
+
         @Override
         public double getStartX() {
             return Math.min(start.getBlockX(), end.getBlockX());

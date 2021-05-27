@@ -41,6 +41,7 @@ import ru.craftlogic.api.event.block.FarmlandTrampleEvent;
 import ru.craftlogic.api.event.block.FluidFlowEvent;
 import ru.craftlogic.api.event.block.PistonCheckCanMoveEvent;
 import ru.craftlogic.api.event.player.PlayerCheckCanEditEvent;
+import ru.craftlogic.api.event.player.PlayerTeleportHomeEvent;
 import ru.craftlogic.api.math.Bounding;
 import ru.craftlogic.api.math.BoxBounding;
 import ru.craftlogic.api.server.PlayerManager;
@@ -215,6 +216,19 @@ public class RegionManager extends ConfigurableManager {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onPlayerTeleportHome(PlayerTeleportHomeEvent event) {
+        Region targetRegion = getRegion(event.bedLocation);
+        if (!targetRegion.canInteractBlocks(event.player)) {
+            PlayerManager playerManager = event.player.getServer().getPlayerManager();
+            OfflinePlayer owner = playerManager.getOffline(targetRegion.getOwner());
+            if (owner != null) {
+                event.context.sendMessage(Text.translation("commands.home.region_permission").arg(owner.getName()).red());
+                event.setCanceled(true);
             }
         }
     }
