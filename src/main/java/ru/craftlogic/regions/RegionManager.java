@@ -223,7 +223,7 @@ public class RegionManager extends ConfigurableManager {
     @SubscribeEvent
     public void onPlayerTeleportHome(PlayerTeleportHomeEvent event) {
         Region targetRegion = getRegion(event.bedLocation);
-        if (!targetRegion.canInteractBlocks(event.player)) {
+        if (targetRegion != null && !targetRegion.canInteractBlocks(event.player)) {
             PlayerManager playerManager = event.player.getServer().getPlayerManager();
             OfflinePlayer owner = playerManager.getOffline(targetRegion.getOwner());
             if (owner != null) {
