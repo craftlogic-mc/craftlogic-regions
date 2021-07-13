@@ -570,60 +570,62 @@ public class RegionManager extends ConfigurableManager {
 
     @SubscribeEvent
     public void onPistonCheckCanMove(PistonCheckCanMoveEvent event) {
-        net.minecraft.world.WorldServer world = (WorldServer) event.getWorld();
-        Location pistonPos = new Location(world, event.getPistonPos());
-        Region pistonRegion = getRegion(pistonPos);
-        Location movePos = new Location(world, event.getBlockToMove());
-        Region moveRegion = getRegion(movePos);
-        if (moveRegion != null && moveRegion != pistonRegion) {
-            event.setResult(Event.Result.DENY);
-            world.addScheduledTask(() -> {
-                SPacketBlockChange packet = new SPacketBlockChange(pistonPos.getWorld(), pistonPos.getPos());
-                for (EntityPlayer player : world.playerEntities) {
-                    EntityPlayerMP p = (EntityPlayerMP) player;
-                    if (pistonPos.distanceSq(new Location(p)) <= 512) {
-                        p.connection.sendPacket(packet);
-                    }
-                }
-            });
-            return;
-        }
-        for (BlockPos pos : event.getToMove()) {
-            Location loc = new Location(world, pos);
-            Region reg = getRegion(loc);
-            if (reg != null && reg != pistonRegion) {
+        if (!event.getWorld().isRemote) {
+            net.minecraft.world.WorldServer world = (WorldServer) event.getWorld();
+            Location pistonPos = new Location(world, event.getPistonPos());
+            Region pistonRegion = getRegion(pistonPos);
+            Location movePos = new Location(world, event.getBlockToMove());
+            Region moveRegion = getRegion(movePos);
+            if (moveRegion != null && moveRegion != pistonRegion) {
                 event.setResult(Event.Result.DENY);
                 world.addScheduledTask(() -> {
-                    for (BlockPos p : event.getToMove()) {
-                        SPacketBlockChange packet = new SPacketBlockChange(world, p);
-                        for (EntityPlayer player : world.playerEntities) {
-                            EntityPlayerMP pl = (EntityPlayerMP) player;
-                            if (p.distanceSq(pl.getPosition()) <= 512) {
-                                pl.connection.sendPacket(packet);
-                            }
+                    SPacketBlockChange packet = new SPacketBlockChange(pistonPos.getWorld(), pistonPos.getPos());
+                    for (EntityPlayer player : world.playerEntities) {
+                        EntityPlayerMP p = (EntityPlayerMP) player;
+                        if (pistonPos.distanceSq(new Location(p)) <= 512) {
+                            p.connection.sendPacket(packet);
                         }
                     }
                 });
                 return;
             }
-        }
-        for (BlockPos pos : event.getToDestroy()) {
-            Location loc = new Location(world, pos);
-            Region reg = getRegion(loc);
-            if (reg != null && reg != pistonRegion) {
-                event.setResult(Event.Result.DENY);
-                world.addScheduledTask(() -> {
-                    for (BlockPos p : event.getToDestroy()) {
-                        SPacketBlockChange packet = new SPacketBlockChange(world, p);
-                        for (EntityPlayer player : world.playerEntities) {
-                            EntityPlayerMP pl = (EntityPlayerMP) player;
-                            if (p.distanceSq(pl.getPosition()) <= 512) {
-                                pl.connection.sendPacket(packet);
+            for (BlockPos pos : event.getToMove()) {
+                Location loc = new Location(world, pos);
+                Region reg = getRegion(loc);
+                if (reg != null && reg != pistonRegion) {
+                    event.setResult(Event.Result.DENY);
+                    world.addScheduledTask(() -> {
+                        for (BlockPos p : event.getToMove()) {
+                            SPacketBlockChange packet = new SPacketBlockChange(world, p);
+                            for (EntityPlayer player : world.playerEntities) {
+                                EntityPlayerMP pl = (EntityPlayerMP) player;
+                                if (p.distanceSq(pl.getPosition()) <= 512) {
+                                    pl.connection.sendPacket(packet);
+                                }
                             }
                         }
-                    }
-                });
-                return;
+                    });
+                    return;
+                }
+            }
+            for (BlockPos pos : event.getToDestroy()) {
+                Location loc = new Location(world, pos);
+                Region reg = getRegion(loc);
+                if (reg != null && reg != pistonRegion) {
+                    event.setResult(Event.Result.DENY);
+                    world.addScheduledTask(() -> {
+                        for (BlockPos p : event.getToDestroy()) {
+                            SPacketBlockChange packet = new SPacketBlockChange(world, p);
+                            for (EntityPlayer player : world.playerEntities) {
+                                EntityPlayerMP pl = (EntityPlayerMP) player;
+                                if (p.distanceSq(pl.getPosition()) <= 512) {
+                                    pl.connection.sendPacket(packet);
+                                }
+                            }
+                        }
+                    });
+                    return;
+                }
             }
         }
     }
