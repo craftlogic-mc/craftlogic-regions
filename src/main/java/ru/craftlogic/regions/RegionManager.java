@@ -226,7 +226,7 @@ public class RegionManager extends ConfigurableManager {
         if (targetRegion != null && !targetRegion.canInteractBlocks(event.player)) {
             PlayerManager playerManager = event.player.getServer().getPlayerManager();
             OfflinePlayer owner = playerManager.getOffline(targetRegion.getOwner());
-            if (owner != null) {
+            if (owner != null && !event.player.hasPermission("commands.home.teleport.others")) {
                 event.context.sendMessage(Text.translation("commands.home.region_permission").arg(owner.getName()).red());
                 event.setCanceled(true);
             }
