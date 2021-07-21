@@ -46,6 +46,7 @@ import ru.craftlogic.regions.WorldRegionManager.RegionAbility;
 import ru.craftlogic.regions.common.ProxyCommon;
 import ru.craftlogic.regions.common.item.ItemWand;
 import ru.craftlogic.regions.network.message.MessageDeleteRegion;
+import ru.craftlogic.regions.network.message.MessageOverride;
 import ru.craftlogic.regions.network.message.MessageRegion;
 import ru.craftlogic.util.ReflectiveUsage;
 
@@ -59,6 +60,7 @@ import static java.lang.Math.min;
 public class ProxyClient extends ProxyCommon {
     private final Minecraft client = FMLClientHandler.instance().getClient();
     private Map<UUID, VisualRegion> regions = new HashMap<>();
+    private boolean override = false;
     private boolean showRegionsThroughBlocks = false;
 
     @Override
@@ -91,6 +93,12 @@ public class ProxyClient extends ProxyCommon {
     @Override
     protected AdvancedMessage handleDeleteRegion(MessageDeleteRegion message, MessageContext context) {
         syncTask(context, () -> this.regions.remove(message.getId()));
+        return null;
+    }
+
+    @Override
+    protected AdvancedMessage handleOverride(MessageOverride message, MessageContext context) {
+        syncTask(context, () -> this.override = message.isOverride());
         return null;
     }
 
@@ -169,13 +177,17 @@ public class ProxyClient extends ProxyCommon {
         }
     }
 
+    private boolean isRegionOwner(VisualRegion region, EntityPlayer player) {
+        return override || region.owner.getId().equals(player.getUniqueID());
+    }
+
     @SubscribeEvent
     public void onBlockRightClick(PlayerInteractEvent.RightClickBlock event) {
         EntityPlayer player = event.getEntityPlayer();
         Location location = new Location(event.getWorld(), event.getPos());
         if (location.isWorldRemote() && !location.isAir() && client.playerController.getCurrentGameType() != GameType.SPECTATOR) {
             VisualRegion region = getRegion(location);
-            if (region != null && !region.interactBlocks && !region.owner.getId().equals(player.getUniqueID())) {
+            if (region != null && !region.interactBlocks && !isRegionOwner(region, player)) {
                 event.setUseBlock(Event.Result.DENY);
                 ItemStack heldItem = event.getItemStack();
                 if (heldItem.getItem() instanceof ItemBlock) {
@@ -201,7 +213,7 @@ public class ProxyClient extends ProxyCommon {
         Location location = new Location(event.getWorld(), event.getPos());
         if (location.isWorldRemote() && !location.isAir() && client.playerController.getCurrentGameType() != GameType.SPECTATOR) {
             VisualRegion region = getRegion(location);
-            if (region != null && !region.interactBlocks && !region.owner.getId().equals(player.getUniqueID())) {
+            if (region != null && !region.interactBlocks && !isRegionOwner(region, player)) {
                 event.setUseBlock(Event.Result.DENY);
                 player.sendStatusMessage(Text.translation("chat.region.interact.blocks").red().build(), true);
             }
@@ -214,7 +226,7 @@ public class ProxyClient extends ProxyCommon {
         Location location = new Location(player.world, event.getPos());
         if (location.isWorldRemote() && !location.isAir() && client.playerController.getCurrentGameType() != GameType.SPECTATOR) {
             VisualRegion region = getRegion(location);
-            if (region != null && !region.interactBlocks && !region.owner.getId().equals(player.getUniqueID())) {
+            if (region != null && !region.interactBlocks && !isRegionOwner(region, player)) {
                 event.setCanceled(true);
             }
         }

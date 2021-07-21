@@ -20,6 +20,7 @@ import java.util.*;
 public class WorldRegionManager extends ConfigurableManager {
     private static final Logger LOGGER = LogManager.getLogger("WorldRegionManager");
 
+    final Set<UUID> regionAccessOverrides = new HashSet<>();
     private final Map<UUID, Region> regions = new HashMap<>();
     private final Dimension dimension;
 
@@ -206,7 +207,7 @@ public class WorldRegionManager extends ConfigurableManager {
         }
 
         public boolean isOwner(UUID target) {
-            return owner.equals(target);
+            return owner.equals(target) || regionAccessOverrides.contains(target);
         }
 
         public void setOwner(OfflinePlayer target) {

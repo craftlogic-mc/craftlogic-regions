@@ -51,5 +51,7 @@ commands.region.transfer.received=%s transferred ownership of their %s
 commands.region.transfer.received.target=region
 commands.region.transfer.max_count=Receiver's region count exceeds their limit: %s out of %s
 commands.region.transfer.max_area=Your region area exceeds receiver's limit: %s > %s
+commands.region.override.enabled=Priority mode enabled
+commands.region.override.disabled=Priority mode disabled
 
 commands.home.region_permission=You cannot teleport to %s's region!

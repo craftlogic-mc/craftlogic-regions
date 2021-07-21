@@ -51,5 +51,7 @@ commands.region.transfer.received=%s передал вам права владе
 commands.region.transfer.received.target=регионом
 commands.region.transfer.max_count=Количество регионов получателя превышает допустимый лимит: %s из %s
 commands.region.transfer.max_area=Площадь вашего региона превышает лимит получателя: %s > %s
+commands.region.override.enabled=Режим приоритета включен
+commands.region.override.disabled=Режим приоритета отключен
 
 commands.home.region_permission=Вы не можете телепортироваться в регион игрока %s!

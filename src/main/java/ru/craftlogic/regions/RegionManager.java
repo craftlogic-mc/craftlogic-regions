@@ -1,6 +1,7 @@
 package ru.craftlogic.regions;
 
 import com.google.gson.JsonObject;
+import net.minecraft.command.CommandException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.monster.IMob;
@@ -36,6 +37,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import ru.craftlogic.api.command.CommandContext;
 import ru.craftlogic.api.event.block.DispenserShootEvent;
 import ru.craftlogic.api.event.block.FarmlandTrampleEvent;
 import ru.craftlogic.api.event.block.FluidFlowEvent;
@@ -55,6 +57,7 @@ import ru.craftlogic.common.entity.projectile.EntityThrownItem;
 import ru.craftlogic.regions.WorldRegionManager.Region;
 import ru.craftlogic.regions.common.command.CommandRegion;
 import ru.craftlogic.regions.common.command.CommandWand;
+import ru.craftlogic.regions.network.message.MessageOverride;
 import ru.craftlogic.regions.network.message.MessageRegion;
 
 import javax.annotation.Nullable;
@@ -683,6 +686,17 @@ public class RegionManager extends ConfigurableManager {
         Region region = getRegion(location);
         if (region != null && !region.canEditBlocks(player.getUniqueID())) {
             event.setCanceled(true);
+        }
+    }
+
+    public boolean toggleOverride(Player sender) throws CommandException {
+        WorldRegionManager manager = managers.get(sender.getWorldName());
+        if (manager != null) {
+            boolean result = !manager.regionAccessOverrides.remove(sender.getId()) && manager.regionAccessOverrides.add(sender.getId());
+            sender.sendPacket(new MessageOverride(result));
+            return result;
+        } else {
+            throw new CommandException("commands.generic.world.notFound", sender.getWorldName());
         }
     }
 }

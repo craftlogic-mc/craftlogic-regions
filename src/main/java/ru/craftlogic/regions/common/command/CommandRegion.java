@@ -29,6 +29,7 @@ public class CommandRegion extends CommandBase {
             "claim <name>",
             "info",
             "info <region:Region>",
+            "override",
             "<region:Region>",
             ""
         );
@@ -55,6 +56,22 @@ public class CommandRegion extends CommandBase {
                         }
                     } else {
                         throw new CommandException("commands.region.unknown", regionId.toString());
+                    }
+                    break;
+                }
+                case "override": {
+                    Player sender = ctx.senderAsPlayer();
+                    if (sender.hasPermission("commands.region.override", 4)) {
+                        boolean enabled = regionManager.toggleOverride(sender);
+                        if (enabled) {
+                            sender.sendMessage(
+                                Text.translation("commands.region.override.enabled").yellow()
+                            );
+                        } else {
+                            sender.sendMessage(
+                                Text.translation("commands.region.override.disabled").green()
+                            );
+                        }
                     }
                     break;
                 }
