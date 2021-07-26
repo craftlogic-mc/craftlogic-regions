@@ -78,6 +78,18 @@ public class RegionManager extends ConfigurableManager {
         super(server, settingsDirectory.resolve("regions.json"), LOGGER);
     }
 
+    WorldRegionManager getWorld(String world) {
+        return managers.get(world);
+    }
+
+    public WorldRegionManager getWorld(LocatableCommandSender lcs) {
+        return getWorld(lcs.getLocation().getWorldName());
+    }
+
+    public WorldRegionManager getWorld(Location l) {
+        return getWorld(l.getWorldName());
+    }
+
     @Override
     public void registerCommands(CommandManager commandManager) {
         commandManager.registerCommand(new CommandRegion());
@@ -117,12 +129,66 @@ public class RegionManager extends ConfigurableManager {
         }
     }
 
+    public void tryCreateRegion(Player sender, Location start, Location end) throws CommandException {
+        WorldRegionManager world = getWorld(sender);
+        if (!world.enabled) {
+            throw new CommandException("commands.region.create.dimension_disabled");
+        }
+        int width = Math.abs(start.getBlockX() - end.getBlockX()) + 1;
+        int depth = Math.abs(start.getBlockZ() - end.getBlockZ()) + 1;
+        int maxArea = sender.getPermissionMetadata("region.max-area", 100 * 100, Integer::parseInt);
+        int maxCount = sender.getPermissionMetadata("region.max-maxCount", 5, Integer::parseInt);
+
+        int area = width * depth;
+        int count = getPlayerRegions(sender).size();
+
+        if (count >= maxCount) {
+            throw new CommandException("commands.region.create.too_many", count, maxCount);
+        }
+        if (area > maxArea) {
+            throw new CommandException("commands.region.create.too_large", area, maxArea);
+        }
+
+        List<WorldRegionManager.Region> regions = getNearbyRegions(start, end, false);
+        if (!regions.isEmpty()) {
+            throw new CommandException("commands.region.create.intersects", regions.size());
+        }
+        sender.sendQuestion(
+            "region.create",
+            Text.translation("commands.region.create.question")
+                .arg(width)
+                .arg(depth),
+            60,
+            confirmed -> {
+                if (confirmed) {
+                    List<WorldRegionManager.Region> r = getNearbyRegions(start, end, false);
+                    if (r.isEmpty()) {
+                        WorldRegionManager.Region region = createRegion(start, end, sender);
+                        if (region != null) {
+                            sender.sendMessage(
+                                Text.translation("commands.region.create.success").green()
+                                    .arg(width, Text::darkGreen)
+                                    .arg(depth, Text::darkGreen)
+                            );
+                        } else {
+                            sender.sendStatus(Text.translation("commands.region.create.failure").red());
+                        }
+                    } else {
+                        sender.sendStatus(Text.translation("commands.region.create.intersects").red()
+                            .arg(r.size(), Text::darkRed)
+                        );
+                    }
+                }
+            }
+        );
+    }
+
     public Region createRegion(Location start, Location end, OfflinePlayer owner) {
         return createRegion(start, end, owner.getId());
     }
 
     public Region createRegion(Location start, Location end, UUID owner) {
-        WorldRegionManager manager = managers.get(start.getWorldName());
+        WorldRegionManager manager = getWorld(start);
         Region region = manager.createRegion(start, end, owner);
         if (region != null) {
             notifyRegionChange(region);
@@ -168,7 +234,7 @@ public class RegionManager extends ConfigurableManager {
     }
 
     public Region getRegion(Location location) {
-        WorldRegionManager manager = managers.get(location.getWorldName());
+        WorldRegionManager manager = getWorld(location);
         if (manager != null) {
             for (Region region : manager.getAllRegions()) {
                 if (region.isOwning(location)) {
@@ -183,7 +249,7 @@ public class RegionManager extends ConfigurableManager {
         if (!start.isDimensionLoaded() && !loadWorld) {
             return Collections.emptyList();
         }
-        WorldRegionManager manager = managers.get(start.getWorldName());
+        WorldRegionManager manager = getWorld(start);
         if (manager != null) {
             List<Region> result = new ArrayList<>();
             Bounding origin = new BoxBounding(start, end);
@@ -690,7 +756,7 @@ public class RegionManager extends ConfigurableManager {
     }
 
     public boolean toggleOverride(Player sender) throws CommandException {
-        WorldRegionManager manager = managers.get(sender.getWorldName());
+        WorldRegionManager manager = getWorld(sender);
         if (manager != null) {
             boolean result = !manager.regionAccessOverrides.remove(sender.getId()) && manager.regionAccessOverrides.add(sender.getId());
             sender.sendPacket(new MessageOverride(result));

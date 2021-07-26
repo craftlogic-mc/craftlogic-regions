@@ -23,6 +23,7 @@ public class WorldRegionManager extends ConfigurableManager {
     final Set<UUID> regionAccessOverrides = new HashSet<>();
     private final Map<UUID, Region> regions = new HashMap<>();
     private final Dimension dimension;
+    boolean enabled = true;
 
     public WorldRegionManager(Server server, World world, Logger logger) {
         super(server, world.getDir().resolve("regions.json"), logger);
@@ -36,6 +37,10 @@ public class WorldRegionManager extends ConfigurableManager {
 
     @Override
     protected void load(JsonObject regions) {
+        JsonElement enabled = regions.remove("enabled");
+        if (enabled != null) {
+            this.enabled = enabled.getAsBoolean();
+        }
         for (Map.Entry<String, JsonElement> entry : regions.entrySet()) {
             UUID id = UUID.fromString(entry.getKey());
             this.regions.put(id, new Region(this.dimension, id, entry.getValue().getAsJsonObject()));
@@ -45,6 +50,7 @@ public class WorldRegionManager extends ConfigurableManager {
 
     @Override
     protected void save(JsonObject regions) {
+        regions.addProperty("enabled", enabled);
         for (Map.Entry<UUID, Region> entry : this.regions.entrySet()) {
             regions.add(entry.getKey().toString(), entry.getValue().toJson());
         }

@@ -88,8 +88,9 @@ public class ItemWand extends ItemBase {
                     player.sendStatus(Text.translation("item.wand.other_dimension").red());
                 } else if (!firstPoint.getPos().equals(location.getPos())) {
                     wand.removeSubCompound("pos");
+
                     try {
-                        createRegion(player, regionManager, firstPoint, location);
+                        regionManager.tryCreateRegion(player, firstPoint, location);
                     } catch (CommandException e) {
                         player.sendStatus(Text.translation(e).red());
                     }
@@ -114,53 +115,4 @@ public class ItemWand extends ItemBase {
         return EnumActionResult.SUCCESS;
     }
 
-    private static void createRegion(Player sender, RegionManager regionManager, Location start, Location end) throws CommandException {
-        int width = Math.abs(start.getBlockX() - end.getBlockX()) + 1;
-        int depth = Math.abs(start.getBlockZ() - end.getBlockZ()) + 1;
-        int maxArea = sender.getPermissionMetadata("region.max-area", 100 * 100, Integer::parseInt);
-        int maxCount = sender.getPermissionMetadata("region.max-maxCount", 5, Integer::parseInt);
-
-        int area = width * depth;
-        int count = regionManager.getPlayerRegions(sender).size();
-
-        if (count >= maxCount) {
-            throw new CommandException("commands.region.create.too_many", count, maxCount);
-        }
-        if (area > maxArea) {
-            throw new CommandException("commands.region.create.too_large", area, maxArea);
-        }
-
-        List<WorldRegionManager.Region> regions = regionManager.getNearbyRegions(start, end, false);
-        if (!regions.isEmpty()) {
-            throw new CommandException("commands.region.create.intersects", regions.size());
-        }
-        sender.sendQuestion(
-            "region.create",
-            Text.translation("commands.region.create.question")
-                .arg(width)
-                .arg(depth),
-            60,
-            confirmed -> {
-                if (confirmed) {
-                    List<WorldRegionManager.Region> r = regionManager.getNearbyRegions(start, end, false);
-                    if (r.isEmpty()) {
-                        WorldRegionManager.Region region = regionManager.createRegion(start, end, sender);
-                        if (region != null) {
-                            sender.sendMessage(
-                                Text.translation("commands.region.create.success").green()
-                                    .arg(width, Text::darkGreen)
-                                    .arg(depth, Text::darkGreen)
-                            );
-                        } else {
-                            sender.sendStatus(Text.translation("commands.region.create.failure").red());
-                        }
-                    } else {
-                        sender.sendStatus(Text.translation("commands.region.create.intersects").red()
-                            .arg(r.size(), Text::darkRed)
-                        );
-                    }
-                }
-            }
-        );
-    }
 }

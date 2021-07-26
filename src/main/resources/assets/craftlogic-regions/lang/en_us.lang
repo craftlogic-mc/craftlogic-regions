@@ -27,6 +27,7 @@ commands.region.create.success=You have successfully created a new region with s
 commands.region.create.failure=Region creation failed
 commands.region.create.too_many=You have too many regions: %d out of %d
 commands.region.create.too_large=Your region's area is tool large: %d > %d
+commands.region.create.dimension_disabled=Regions are disabled in this dimension!
 commands.region.unknown=Unknown region: %s
 commands.region.not_found=There is no region at your location!
 commands.region.claim_wand=To claim a region use //wand command

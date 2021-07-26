@@ -27,6 +27,7 @@ commands.region.create.success=Вы успешно создали новый р�
 commands.region.create.failure=Ошибка создания региона
 commands.region.create.too_many=У вас слишком много регионов: %d из %d
 commands.region.create.too_large=Площадь вашего региона слишком большая: %d > %d
+commands.region.create.dimension_disabled=В этом измерении регионы отключены!
 commands.region.unknown=Неизвестный регион: %s
 commands.region.not_found=В вашей локации регионы отсутствуют
 commands.region.claim_wand=Для создания региона используйте команду //wand
