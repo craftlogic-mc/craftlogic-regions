@@ -15,7 +15,7 @@ item.wand.name=Жезл региона
 item.wand.first_point=Первая точка: %s, %s, %s
 item.wand.tooltip=Нажмите ПКМ, чтобы установить точку
 item.wand.tooltip.columns=Не стройте столбы из блоков!
-item.wand.other_dimension=Невозможно создать регион между изменениямти
+item.wand.other_dimension=Невозможно создать регион между измерениями
 
 commands.region.not_owning=Вы не владеете этим регионом!
 commands.region.delete.question=Вы действительно хотите удалить этот регион?
