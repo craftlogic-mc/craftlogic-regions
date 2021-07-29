@@ -1,9 +1,11 @@
 package ru.craftlogic.regions;
 
 import com.google.gson.JsonObject;
+import com.mojang.authlib.GameProfile;
 import net.minecraft.command.CommandException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.boss.EntityWither;
 import net.minecraft.entity.monster.IMob;
 import net.minecraft.entity.passive.IAnimals;
 import net.minecraft.entity.player.EntityPlayer;
@@ -22,8 +24,11 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.common.util.FakePlayerFactory;
+import net.minecraftforge.event.entity.EntityMobGriefingEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.living.LivingDestroyBlockEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.FillBucketEvent;
@@ -717,6 +722,18 @@ public class RegionManager extends ConfigurableManager {
                 double z = (rand.nextDouble() - 0.5D) * 0.2D;
                 to.spawnParticle(EnumParticleTypes.REDSTONE, x, y, z, 0, 0, 0);
             }
+            event.setCanceled(true);
+        }
+    }
+
+    private static final GameProfile MINECRAFT = new GameProfile(UUID.fromString("41C82C87-7AfB-4024-BA57-13D2C99CAE77"), "[Minecraft]");
+
+    @SubscribeEvent
+    public void onEntityDestroyBlock(LivingDestroyBlockEvent event) {
+        Entity entity = event.getEntity();
+        Location location = new Location(entity.world, event.getPos());
+        Region region = getRegion(location);
+        if (region != null && !region.canEditBlocks(MINECRAFT.getId())) {
             event.setCanceled(true);
         }
     }
