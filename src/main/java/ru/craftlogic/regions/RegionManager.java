@@ -5,7 +5,6 @@ import com.mojang.authlib.GameProfile;
 import net.minecraft.command.CommandException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.boss.EntityWither;
 import net.minecraft.entity.monster.IMob;
 import net.minecraft.entity.passive.IAnimals;
 import net.minecraft.entity.player.EntityPlayer;
@@ -24,8 +23,6 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.WorldServer;
-import net.minecraftforge.common.util.FakePlayerFactory;
-import net.minecraftforge.event.entity.EntityMobGriefingEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDestroyBlockEvent;
@@ -42,7 +39,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import ru.craftlogic.api.command.CommandContext;
 import ru.craftlogic.api.event.block.DispenserShootEvent;
 import ru.craftlogic.api.event.block.FarmlandTrampleEvent;
 import ru.craftlogic.api.event.block.FluidFlowEvent;
@@ -136,7 +132,7 @@ public class RegionManager extends ConfigurableManager {
 
     public void tryCreateRegion(Player sender, Location start, Location end) throws CommandException {
         WorldRegionManager world = getWorld(sender);
-        if (!world.enabled) {
+        if (!world.enabled && !sender.hasPermission("commands.region.create.dimension_bypass." + start.getWorldName())) {
             throw new CommandException("commands.region.create.dimension_disabled");
         }
         int width = Math.abs(start.getBlockX() - end.getBlockX()) + 1;
@@ -276,6 +272,16 @@ public class RegionManager extends ConfigurableManager {
             }
         }
         return null;
+    }
+
+    @SubscribeEvent
+    public void onPlayerJoin(net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent event) {
+        EntityPlayer entity = event.player;
+        if (!entity.world.isRemote && entity instanceof EntityPlayerMP) {
+            Player player = Player.from((EntityPlayerMP) entity);
+            boolean override = hasOverride(player);
+            player.sendPacket(new MessageOverride(override));
+        }
     }
 
     @SubscribeEvent
@@ -449,6 +455,11 @@ public class RegionManager extends ConfigurableManager {
             if (attacker instanceof EntityPlayer && checkAttack(((EntityPlayer) attacker), victim)) {
                 event.setCanceled(true);
             }
+        } else if (source.isProjectile()) {
+            Entity attacker = source.getTrueSource();
+            if (attacker instanceof EntityPlayer && checkAttack(((EntityPlayer) attacker), victim)) {
+                event.setCanceled(true);
+            }
         }
     }
 
@@ -543,6 +554,9 @@ public class RegionManager extends ConfigurableManager {
                 } else if (throwable instanceof EntityThrownItem) {
                     throwable.entityDropItem(((EntityThrownItem) throwable).getItem(), 0F);
                     ((EntityThrownItem) throwable).setItem(ItemStack.EMPTY);
+                    throwable.setDead();
+                    ((EntityPlayer) thrower).sendStatusMessage(Text.translation("chat.region.interact.projectiles").red().build(), true);
+                } else { //TODO generic throwable drop support
                     throwable.setDead();
                     ((EntityPlayer) thrower).sendStatusMessage(Text.translation("chat.region.interact.projectiles").red().build(), true);
                 }
@@ -780,6 +794,15 @@ public class RegionManager extends ConfigurableManager {
             return result;
         } else {
             throw new CommandException("commands.generic.world.notFound", sender.getWorldName());
+        }
+    }
+
+    public boolean hasOverride(Player player) {
+        WorldRegionManager manager = getWorld(player);
+        if (manager != null) {
+            return manager.regionAccessOverrides.contains(player.getId());
+        } else {
+            return false;
         }
     }
 }
