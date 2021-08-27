@@ -1,13 +1,9 @@
 package ru.craftlogic.regions.client;
 
 import com.mojang.authlib.GameProfile;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockChest;
-import net.minecraft.block.BlockDoor;
-import net.minecraft.block.BlockTrapDoor;
-import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.GlStateManager.DestFactor;
@@ -19,7 +15,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
-import net.minecraft.util.SoundCategory;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentTranslation;
@@ -37,7 +33,6 @@ import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.opengl.GL11;
-import ru.craftlogic.api.CraftSounds;
 import ru.craftlogic.api.math.Bounding;
 import ru.craftlogic.api.network.AdvancedMessage;
 import ru.craftlogic.api.text.Text;
@@ -45,6 +40,7 @@ import ru.craftlogic.api.world.Location;
 import ru.craftlogic.regions.WorldRegionManager.RegionAbility;
 import ru.craftlogic.regions.common.ProxyCommon;
 import ru.craftlogic.regions.common.item.ItemWand;
+import ru.craftlogic.regions.network.message.MessageConfiguration;
 import ru.craftlogic.regions.network.message.MessageDeleteRegion;
 import ru.craftlogic.regions.network.message.MessageOverride;
 import ru.craftlogic.regions.network.message.MessageRegion;
@@ -62,6 +58,10 @@ public class ProxyClient extends ProxyCommon {
     private Map<UUID, VisualRegion> regions = new HashMap<>();
     private boolean override = false;
     private boolean showRegionsThroughBlocks = false;
+    private Set<ResourceLocation> whitelistBlockUsage = new HashSet<>();
+    private Set<ResourceLocation> blacklistItemUsage = new HashSet<>();
+    private Set<ResourceLocation> chests = new HashSet<>();
+    private Set<ResourceLocation> doors = new HashSet<>();
 
     @Override
     public void preInit() {
@@ -81,10 +81,11 @@ public class ProxyClient extends ProxyCommon {
     @Override
     protected AdvancedMessage handleRegion(MessageRegion message, MessageContext context) {
         syncTask(context, () -> {
-            if (this.client.world != null && message.getDimension() == this.client.world.provider.getDimension()) {
+            WorldClient world = client.world;
+            if (world != null && message.getDimension() == world.provider.getDimension()) {
                 UUID id = message.getId();
                 VisualRegion region = new VisualRegion(message, getPlayer(context));
-                this.regions.put(id, region);
+                regions.put(id, region);
             }
         });
         return null;
@@ -92,18 +93,29 @@ public class ProxyClient extends ProxyCommon {
 
     @Override
     protected AdvancedMessage handleDeleteRegion(MessageDeleteRegion message, MessageContext context) {
-        syncTask(context, () -> this.regions.remove(message.getId()));
+        syncTask(context, () -> regions.remove(message.getId()));
         return null;
     }
 
     @Override
     protected AdvancedMessage handleOverride(MessageOverride message, MessageContext context) {
-        syncTask(context, () -> this.override = message.isOverride());
+        syncTask(context, () -> override = message.isOverride());
+        return null;
+    }
+
+    @Override
+    protected AdvancedMessage handleConfiguration(MessageConfiguration message, MessageContext context) {
+        syncTask(context, () -> {
+            whitelistBlockUsage = message.getWhitelistBlockUsage();
+            blacklistItemUsage = message.getBlacklistItemUsage();
+            doors = message.getDoors();
+            chests = message.getChests();
+        });
         return null;
     }
 
     private VisualRegion getRegion(Location location) {
-        for (VisualRegion region : this.regions.values()) {
+        for (VisualRegion region : regions.values()) {
             if (region.isOwning(location)) {
                 return region;
             }
@@ -188,21 +200,15 @@ public class ProxyClient extends ProxyCommon {
         if (location.isWorldRemote() && !location.isAir() && client.playerController.getCurrentGameType() != GameType.SPECTATOR) {
             VisualRegion region = getRegion(location);
             if (region != null && !region.interactBlocks && !isRegionOwner(region, player)) {
-                event.setUseBlock(Event.Result.DENY);
+                boolean whitelisted = whitelistBlockUsage.contains(location.getBlock().getRegistryName());
+                if (!whitelisted) {
+                    event.setUseBlock(Event.Result.DENY);
+                }
                 ItemStack heldItem = event.getItemStack();
-                if (heldItem.getItem() instanceof ItemBlock) {
+                if (heldItem.getItem() instanceof ItemBlock || blacklistItemUsage.contains(heldItem.getItem().getRegistryName())) {
                     event.setUseItem(Event.Result.DENY);
                 }
                 player.swingArm(EnumHand.MAIN_HAND);
-                player.sendStatusMessage(Text.translation("chat.region.interact.blocks").red().build(), true);
-
-                Block block = location.getBlock();
-
-                if ((block instanceof BlockDoor || block instanceof BlockTrapDoor || block instanceof BlockChest) &&
-                        location.getBlockMaterial() == Material.WOOD) {
-
-                    location.playSound(CraftSounds.OPENING_FAILED, SoundCategory.PLAYERS, 1F, 1F);
-                }
             }
         }
     }

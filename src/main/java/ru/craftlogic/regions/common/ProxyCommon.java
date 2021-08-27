@@ -9,6 +9,7 @@ import ru.craftlogic.api.network.AdvancedMessage;
 import ru.craftlogic.api.network.AdvancedMessageHandler;
 import ru.craftlogic.regions.RegionManager;
 import ru.craftlogic.regions.common.item.ItemWand;
+import ru.craftlogic.regions.network.message.MessageConfiguration;
 import ru.craftlogic.regions.network.message.MessageDeleteRegion;
 import ru.craftlogic.regions.network.message.MessageOverride;
 import ru.craftlogic.regions.network.message.MessageRegion;
@@ -26,6 +27,7 @@ public class ProxyCommon extends AdvancedMessageHandler {
         NETWORK.registerMessage(this::handleRegion, MessageRegion.class, Side.CLIENT);
         NETWORK.registerMessage(this::handleDeleteRegion, MessageDeleteRegion.class, Side.CLIENT);
         NETWORK.registerMessage(this::handleOverride, MessageOverride.class, Side.CLIENT);
+        NETWORK.registerMessage(this::handleConfiguration, MessageConfiguration.class, Side.CLIENT);
     }
 
     public void postInit() {
@@ -41,6 +43,10 @@ public class ProxyCommon extends AdvancedMessageHandler {
     }
 
     protected AdvancedMessage handleOverride(MessageOverride message, MessageContext context) {
+        return null;
+    }
+
+    protected AdvancedMessage handleConfiguration(MessageConfiguration message, MessageContext context) {
         return null;
     }
 

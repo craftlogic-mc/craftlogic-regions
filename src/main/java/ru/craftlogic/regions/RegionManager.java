@@ -1,7 +1,11 @@
 package ru.craftlogic.regions;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.authlib.GameProfile;
+import net.minecraft.block.*;
+import net.minecraft.block.material.Material;
 import net.minecraft.command.CommandException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -12,12 +16,10 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.projectile.EntityArrow;
 import net.minecraft.entity.projectile.EntityPotion;
 import net.minecraft.entity.projectile.EntityThrowable;
+import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.play.server.SPacketBlockChange;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.EntityDamageSourceIndirect;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.text.TextComponentTranslation;
@@ -39,6 +41,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import ru.craftlogic.api.CraftSounds;
 import ru.craftlogic.api.event.block.DispenserShootEvent;
 import ru.craftlogic.api.event.block.FarmlandTrampleEvent;
 import ru.craftlogic.api.event.block.FluidFlowEvent;
@@ -57,7 +60,9 @@ import ru.craftlogic.common.command.CommandManager;
 import ru.craftlogic.common.entity.projectile.EntityThrownItem;
 import ru.craftlogic.regions.WorldRegionManager.Region;
 import ru.craftlogic.regions.common.command.CommandRegion;
+import ru.craftlogic.regions.common.command.CommandRegions;
 import ru.craftlogic.regions.common.command.CommandWand;
+import ru.craftlogic.regions.network.message.MessageConfiguration;
 import ru.craftlogic.regions.network.message.MessageOverride;
 import ru.craftlogic.regions.network.message.MessageRegion;
 
@@ -74,6 +79,10 @@ public class RegionManager extends ConfigurableManager {
     final Map<String, WorldRegionManager> managers = new HashMap<>();
     private int updateCounter;
     private boolean loaded;
+    public Set<ResourceLocation> whitelistBlockUsage = new HashSet<>();
+    public Set<ResourceLocation> blacklistItemUsage = new HashSet<>();
+    public Set<ResourceLocation> chests = new HashSet<>();
+    public Set<ResourceLocation> doors = new HashSet<>();
 
     public RegionManager(Server server, Path settingsDirectory) {
         super(server, settingsDirectory.resolve("regions.json"), LOGGER);
@@ -95,6 +104,7 @@ public class RegionManager extends ConfigurableManager {
     public void registerCommands(CommandManager commandManager) {
         commandManager.registerCommand(new CommandRegion());
         commandManager.registerCommand(new CommandWand());
+        commandManager.registerCommand(new CommandRegions());
         commandManager.registerArgumentType("Region", false, ctx -> {
             RegionManager regionManager = ctx.server().getManager(RegionManager.class);
             CommandSender sender = ctx.sender();
@@ -106,9 +116,32 @@ public class RegionManager extends ConfigurableManager {
         });
     }
 
+    private void readResourceLocations(Set<ResourceLocation> list, JsonObject config, String key) {
+        list.clear();
+        if (config.has(key))  {
+            JsonArray array = config.getAsJsonArray(key);
+            for (JsonElement e : array) {
+                list.add(new ResourceLocation(e.getAsString()));
+            }
+        }
+    }
+
+    private void writeResourceLocations(Set<ResourceLocation> list, JsonObject config, String key) {
+        JsonArray array = new JsonArray();
+        for (ResourceLocation res : list) {
+            array.add(res.toString());
+        }
+        config.add(key, array);
+    }
+
     @Override
-    public void load(JsonObject regions) {
+    public void load(JsonObject config) {
         loaded = true;
+
+        readResourceLocations(whitelistBlockUsage, config, "block_usage_whitelist");
+        readResourceLocations(blacklistItemUsage, config, "item_usage_blacklist");
+        readResourceLocations(chests, config, "custom_chests");
+        readResourceLocations(doors, config, "custom_doors");
 
         for (WorldRegionManager manager : managers.values()) {
             try {
@@ -119,15 +152,30 @@ public class RegionManager extends ConfigurableManager {
         }
     }
 
+    private boolean omitRegionSave = false;
+
     @Override
     public void save(JsonObject config) {
-        for (WorldRegionManager manager : managers.values()) {
-            try {
-                manager.save(true);
-            } catch (IOException e) {
-                e.printStackTrace();
+        writeResourceLocations(whitelistBlockUsage, config, "block_usage_whitelist");
+        writeResourceLocations(blacklistItemUsage, config, "item_usage_blacklist");
+        writeResourceLocations(chests, config, "custom_chests");
+        writeResourceLocations(doors, config, "custom_doors");
+
+        if (!omitRegionSave) {
+            for (WorldRegionManager manager : managers.values()) {
+                try {
+                    manager.save(true);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
+    }
+
+    public void saveConfiguration() throws IOException {
+        omitRegionSave = true;
+        save(true);
+        omitRegionSave = false;
     }
 
     public void tryCreateRegion(Player sender, Location start, Location end) throws CommandException {
@@ -280,8 +328,13 @@ public class RegionManager extends ConfigurableManager {
         if (!entity.world.isRemote && entity instanceof EntityPlayerMP) {
             Player player = Player.from((EntityPlayerMP) entity);
             boolean override = hasOverride(player);
+            syncConfiguration(player);
             player.sendPacket(new MessageOverride(override));
         }
+    }
+
+    public void syncConfiguration(Player player) {
+        player.sendPacket(new MessageConfiguration(whitelistBlockUsage, blacklistItemUsage, chests, doors));
     }
 
     @SubscribeEvent
@@ -598,10 +651,47 @@ public class RegionManager extends ConfigurableManager {
         if (!location.isAir()) {
             Region region = getRegion(location);
             if (region != null && !region.canInteractBlocks(player.getUniqueID())) {
-                event.setUseBlock(Event.Result.DENY);
-                player.sendStatusMessage(Text.translation("chat.region.interact.blocks").red().build(), true);
+                boolean whitelisted = whitelistBlockUsage.contains(location.getBlock().getRegistryName());
+                if (!whitelisted) {
+                    event.setUseBlock(Event.Result.DENY);
+                }
+                ItemStack heldItem = event.getItemStack();
+                if (heldItem.getItem() instanceof ItemBlock || blacklistItemUsage.contains(heldItem.getItem().getRegistryName())) {
+                    event.setUseItem(Event.Result.DENY);
+                }
+                if (event.getHand() == EnumHand.MAIN_HAND) {
+                    Text<?, ?> message;
+                    if (isLockedDoor(location)) {
+                        location.playSound(CraftSounds.OPENING_FAILED, SoundCategory.PLAYERS, 1F, 1F);
+                        message = Text.translation("chat.region.interact.doors");
+                    } else if (isLockedChest(location)) {
+                        location.playSound(CraftSounds.OPENING_FAILED, SoundCategory.PLAYERS, 1F, 1F);
+                        message = Text.translation("chat.region.interact.chests");
+                    } else if (!whitelisted) {
+                        message = Text.translation("chat.region.interact.blocks");
+                    } else {
+                        return;
+                    }
+                    player.sendStatusMessage(message.red().build(), true);
+                }
             }
         }
+    }
+
+    public boolean isLockedDoor(Location location) {
+        Block block = location.getBlock();
+        if (doors.contains(block.getRegistryName())) {
+            return true;
+        }
+        return (block instanceof BlockDoor || block instanceof BlockTrapDoor || block instanceof BlockFenceGate) && location.getBlockMaterial() == Material.WOOD;
+    }
+
+    public boolean isLockedChest(Location location) {
+        Block block = location.getBlock();
+        if (chests.contains(block.getRegistryName())) {
+            return true;
+        }
+        return (block instanceof BlockChest) && location.getBlockMaterial() == Material.WOOD;
     }
 
     @SubscribeEvent
