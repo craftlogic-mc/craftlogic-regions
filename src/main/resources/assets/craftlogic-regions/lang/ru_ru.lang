@@ -1,17 +1,17 @@
 tooltip.region.owner=Владелец региона
 
 chat.region.wand=Используйте правый клик мыши по блоку, чтобы начать выделять регион. Не стройте столбы из блоков!
-chat.region.edit.blocks=Вы не можете изменять здесь блоки!
-chat.region.attack.monsters=Вы не можете атаковать здесь монстров!
-chat.region.attack.animals=Вы не можете атаковать здесь животных!
-chat.region.attack.players=Вы не можете атаковать здесь игроков!
+chat.region.edit.blocks=Блок защищен от изменений!
+chat.region.attack.monsters=Монстр защищен от атак!
+chat.region.attack.animals=Животное защищено от атак!
+chat.region.attack.players=Игрок защищен от атак!
 chat.region.interact.doors=Дверь заперта!
 chat.region.interact.chests=Контейнер заперт!
-chat.region.interact.blocks=Вы не можете взаимодействовать здесь с блоками!
-chat.region.interact.entities=Вы не можете взаимодействовать здесь с существами!
-chat.region.interact.potions=Вы не можете бросать здесь зелья!
-chat.region.interact.projectiles=Вы не можете бросать здесь снаряды!
-chat.region.interact.explosions=Вы не можете здесь что-либо взрывать!
+chat.region.interact.blocks=Блок защищен от взаимодействий!
+chat.region.interact.entities=Сущность защищена от взаимодействий!
+chat.region.interact.potions=Врзрыв зелья запрещен!
+chat.region.interact.projectiles=Удар снаряда запрещен!
+chat.region.interact.explosions=Взрыв запрещен!
 
 item.wand.name=Жезл региона
 item.wand.first_point=Первая точка: %s, %s, %s
