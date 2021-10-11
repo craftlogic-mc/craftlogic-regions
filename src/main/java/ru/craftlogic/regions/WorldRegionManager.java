@@ -60,7 +60,7 @@ public class WorldRegionManager extends ConfigurableManager {
     public Region createRegion(Location start, Location end, UUID owner) {
         UUID id;
         while (regions.containsKey(id = UUID.randomUUID())) {}
-        Region region = new Region(id, owner, start, end, false, false, new HashMap<>());
+        Region region = new Region(id, owner, start, end, false, false, false, new HashMap<>());
         regions.put(id, region);
         setDirty(true);
         return region;
@@ -111,7 +111,7 @@ public class WorldRegionManager extends ConfigurableManager {
         UUID owner;
         final Map<UUID, Set<RegionAbility>> members;
         final Location start, end;
-        boolean explosions, pvp;
+        boolean explosions, pvp, protectingHostiles;
 
         public Region(Dimension dimension, UUID id, JsonObject root) {
             this(id,
@@ -120,16 +120,18 @@ public class WorldRegionManager extends ConfigurableManager {
                 Location.deserialize(dimension.getVanilla().getId(), root.getAsJsonObject("end")),
                 JsonUtils.getBoolean(root, "pvp", false),
                 JsonUtils.getBoolean(root, "explosions", false),
+                JsonUtils.getBoolean(root, "protectingHostiles", false),
                 root.has("members") ? parseMembers(JsonUtils.getJsonObject(root, "members")) : new HashMap<>()
             );
         }
 
-        public Region(UUID id, UUID owner, Location start, Location end, boolean pvp, boolean explosions, Map<UUID, Set<RegionAbility>> members) {
+        public Region(UUID id, UUID owner, Location start, Location end, boolean pvp, boolean explosions, boolean protectingHostiles, Map<UUID, Set<RegionAbility>> members) {
             this.id = id;
             this.owner = owner;
             this.start = start;
             this.end = end;
             this.pvp = pvp;
+            this.protectingHostiles = protectingHostiles;
             this.explosions = explosions;
             this.members = members;
         }
@@ -307,6 +309,14 @@ public class WorldRegionManager extends ConfigurableManager {
 
         public void setPvP(boolean pvp) {
             this.pvp = pvp;
+        }
+
+        public boolean isProtectingHostiles() {
+            return protectingHostiles;
+        }
+
+        public void setProtectingHostiles(boolean protectingHostiles) {
+            this.protectingHostiles = protectingHostiles;
         }
 
         /**A better method name, maybe?*/

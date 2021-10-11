@@ -8,7 +8,12 @@ import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 import net.minecraft.command.CommandException;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityHanging;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.INpc;
+import net.minecraft.entity.item.EntityArmorStand;
+import net.minecraft.entity.item.EntityBoat;
+import net.minecraft.entity.item.EntityMinecartEmpty;
 import net.minecraft.entity.monster.IMob;
 import net.minecraft.entity.passive.IAnimals;
 import net.minecraft.entity.player.EntityPlayer;
@@ -625,8 +630,13 @@ public class RegionManager extends ConfigurableManager {
                 player.sendStatusMessage(Text.translation("chat.region.attack.players").red().build(), true);
                 return true;
             }
+        } else if (target instanceof INpc) {
+            if (targetRegion != null  && !targetRegion.canAttackNeutral(player.getUniqueID())) {
+                player.sendStatusMessage(Text.translation("chat.region.attack.npc").red().build(), true);
+                return true;
+            }
         } else if (target instanceof IMob) {
-            if (targetRegion != null && false /*&& !targetRegion.canAttackHostiles(player.getUniqueID())*/) {
+            if (targetRegion != null && targetRegion.isProtectingHostiles() && !targetRegion.canAttackHostiles(player.getUniqueID())) {
                 player.sendStatusMessage(Text.translation("chat.region.attack.monsters").red().build(), true);
                 return true;
             }
@@ -635,9 +645,19 @@ public class RegionManager extends ConfigurableManager {
                 player.sendStatusMessage(Text.translation("chat.region.attack.animals").red().build(), true);
                 return true;
             }
+        } else if (target instanceof EntityHanging || target instanceof EntityArmorStand) {
+            if (targetRegion != null && !targetRegion.canEditBlocks(player.getUniqueID())) {
+                player.sendStatusMessage(Text.translation("chat.region.attack.hanging").red().build(), true);
+                return true;
+            }
+        }  else if (target instanceof EntityMinecartEmpty || target instanceof EntityBoat) {
+            if (targetRegion != null && !targetRegion.canEditBlocks(player.getUniqueID())) {
+                player.sendStatusMessage(Text.translation("chat.region.attack.transport").red().build(), true);
+                return true;
+            }
         } else {
             if (targetRegion != null && !targetRegion.canEditBlocks(player.getUniqueID())) {
-                player.sendStatusMessage(Text.translation("chat.region.edit.blocks").red().build(), true);
+                player.sendStatusMessage(Text.translation("chat.region.attack.entities").red().build(), true);
                 return true;
             }
         }
@@ -721,7 +741,21 @@ public class RegionManager extends ConfigurableManager {
         Region region = getRegion(new Location(target));
         if (region != null && !region.canInteractEntities(player.getUniqueID())) {
             event.setCanceled(true);
-            player.sendStatusMessage(Text.translation("chat.region.interact.entities").red().build(), true);
+            if (target instanceof EntityPlayer) {
+                player.sendStatusMessage(Text.translation("chat.region.interact.players").red().build(), true);
+            } else if (target instanceof EntityHanging || target instanceof EntityArmorStand) {
+                player.sendStatusMessage(Text.translation("chat.region.interact.hanging").red().build(), true);
+            } else if (target instanceof EntityMinecartEmpty || target instanceof EntityBoat) {
+                player.sendStatusMessage(Text.translation("chat.region.interact.transport").red().build(), true);
+            } else if (target instanceof INpc) {
+                player.sendStatusMessage(Text.translation("chat.region.interact.npc").red().build(), true);
+            } else if (target instanceof IMob) {
+                player.sendStatusMessage(Text.translation("chat.region.interact.monsters").red().build(), true);
+            } else if (target instanceof IAnimals) {
+                player.sendStatusMessage(Text.translation("chat.region.interact.animals").red().build(), true);
+            } else {
+                player.sendStatusMessage(Text.translation("chat.region.interact.entities").red().build(), true);
+            }
         }
     }
 
