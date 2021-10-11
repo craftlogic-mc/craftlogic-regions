@@ -15,6 +15,7 @@ import ru.craftlogic.api.world.Player;
 import ru.craftlogic.regions.RegionManager;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Objects;
 
 public class CommandRegions extends CommandBase {
@@ -29,6 +30,7 @@ public class CommandRegions extends CommandBase {
             "custom chest",
             "custom chest <id>"
         );
+        Collections.addAll(aliases, "rgs", "regs");
     }
 
     @Override
