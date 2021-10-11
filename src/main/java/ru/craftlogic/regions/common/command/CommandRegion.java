@@ -20,16 +20,14 @@ import java.util.*;
 public class CommandRegion extends CommandBase {
     public CommandRegion() {
         super("region", 1,
-            "delete|pvp|explosions",
+            "pvp|hostiles|explosions",
             "expel|transfer <target:OfflinePlayer>",
             "invite <target:OfflinePlayer>",
             "invite <target:OfflinePlayer> <abilities>...",
             "teleport <region:Region>",
-            "claim",
+            "delete|claim|info|override",
             "claim <name>",
-            "info",
             "info <region:Region>",
-            "override",
             "<region:Region>",
             ""
         );
@@ -241,6 +239,25 @@ public class CommandRegion extends CommandBase {
                             region.setPvP(pvp);
                             region.getManager().setDirty(true);
                             sender.sendMessage(Text.translation("commands.region.pvp." + (pvp ? "on" : "off")).color(pvp ? TextFormatting.RED : TextFormatting.GREEN));
+                        } else {
+                            throw new CommandException("commands.region.not_owning");
+                        }
+                    } else {
+                        throw new CommandException("commands.region.not_found");
+                    }
+                    break;
+                }
+                case "hostiles": {
+                    Player sender = ctx.senderAsPlayer();
+                    WorldRegionManager.Region region = regionManager.getRegion(sender.getLocation());
+                    if (region != null) {
+                        if (region.isOwner(sender) && ctx.checkPermission(true, "commands.region.hostiles", 1)
+                            || sender.hasPermission("commands.region.admin.hostiles")) {
+
+                            boolean hostiles = !region.isProtectingHostiles();
+                            region.setProtectingHostiles(hostiles);
+                            region.getManager().setDirty(true);
+                            sender.sendMessage(Text.translation("commands.region.hostiles." + (hostiles ? "on" : "off")).color(hostiles ? TextFormatting.RED : TextFormatting.GREEN));
                         } else {
                             throw new CommandException("commands.region.not_owning");
                         }
