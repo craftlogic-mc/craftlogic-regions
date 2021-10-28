@@ -191,7 +191,7 @@ public class RegionManager extends ConfigurableManager {
         int width = Math.abs(start.getBlockX() - end.getBlockX()) + 1;
         int depth = Math.abs(start.getBlockZ() - end.getBlockZ()) + 1;
         int maxArea = sender.getPermissionMetadata("region.max-area", 100 * 100, Integer::parseInt);
-        int maxCount = sender.getPermissionMetadata("region.max-maxCount", 5, Integer::parseInt);
+        int maxCount = sender.getPermissionMetadata("region.max-count", 5, Integer::parseInt);
 
         int area = width * depth;
         int count = getPlayerRegions(sender).size();
