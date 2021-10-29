@@ -23,11 +23,13 @@ public class WorldRegionManager extends ConfigurableManager {
     final Set<UUID> regionAccessOverrides = new HashSet<>();
     private final Map<UUID, Region> regions = new HashMap<>();
     private final Dimension dimension;
+    private final boolean defaultPvP;
     boolean enabled = true;
 
-    public WorldRegionManager(Server server, World world, Logger logger) {
+    public WorldRegionManager(Server server, World world, boolean defaultPvP, Logger logger) {
         super(server, world.getDir().resolve("regions.json"), logger);
         this.dimension = world.getDimension();
+        this.defaultPvP = defaultPvP;
     }
 
     @Override
@@ -60,7 +62,7 @@ public class WorldRegionManager extends ConfigurableManager {
     public Region createRegion(Location start, Location end, UUID owner) {
         UUID id;
         while (regions.containsKey(id = UUID.randomUUID())) {}
-        Region region = new Region(id, owner, start, end, false, false, false, new HashMap<>());
+        Region region = new Region(id, owner, start, end, defaultPvP, false, false, new HashMap<>());
         regions.put(id, region);
         setDirty(true);
         return region;

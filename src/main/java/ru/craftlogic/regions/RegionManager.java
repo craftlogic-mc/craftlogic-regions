@@ -84,6 +84,7 @@ public class RegionManager extends ConfigurableManager {
     final Map<String, WorldRegionManager> managers = new HashMap<>();
     private int updateCounter;
     private boolean loaded;
+    private boolean defaultPvP;
     public Set<ResourceLocation> whitelistBlockUsage = new HashSet<>();
     public Set<ResourceLocation> blacklistItemUsage = new HashSet<>();
     public Set<ResourceLocation> chests = new HashSet<>();
@@ -142,6 +143,7 @@ public class RegionManager extends ConfigurableManager {
     @Override
     public void load(JsonObject config) {
         loaded = true;
+        defaultPvP = JsonUtils.getBoolean(config, "default-pvp", false);
 
         readResourceLocations(whitelistBlockUsage, config, "block_usage_whitelist");
         readResourceLocations(blacklistItemUsage, config, "item_usage_blacklist");
@@ -161,6 +163,8 @@ public class RegionManager extends ConfigurableManager {
 
     @Override
     public void save(JsonObject config) {
+        config.addProperty("default-pvp", defaultPvP);
+
         writeResourceLocations(whitelistBlockUsage, config, "block_usage_whitelist");
         writeResourceLocations(blacklistItemUsage, config, "item_usage_blacklist");
         writeResourceLocations(chests, config, "custom_chests");
@@ -346,7 +350,7 @@ public class RegionManager extends ConfigurableManager {
     public void onWorldLoad(WorldEvent.Load event) {
         World world = World.fromVanilla(server, event.getWorld());
         if (world != null) {
-            WorldRegionManager manager = new WorldRegionManager(server, world, LOGGER);
+            WorldRegionManager manager = new WorldRegionManager(server, world, defaultPvP, LOGGER);
             managers.put(world.getDimension().getVanilla().getName(), manager);
             if (loaded) {
                 try {
