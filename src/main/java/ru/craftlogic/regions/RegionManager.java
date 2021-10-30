@@ -7,10 +7,7 @@ import com.mojang.authlib.GameProfile;
 import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 import net.minecraft.command.CommandException;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityHanging;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.INpc;
+import net.minecraft.entity.*;
 import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.item.EntityBoat;
 import net.minecraft.entity.item.EntityMinecartEmpty;
@@ -34,6 +31,7 @@ import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDestroyBlockEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.event.entity.living.LivingSetAttackTargetEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.FillBucketEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -509,6 +507,18 @@ public class RegionManager extends ConfigurableManager {
     }
 
     @SubscribeEvent
+    public void onLivingSetAttackTarget(LivingSetAttackTargetEvent event) {
+        EntityLivingBase attacker = event.getEntityLiving();
+        EntityLivingBase target = event.getTarget();
+        if (target instanceof EntityPlayer) {
+            EntityPlayer player = (EntityPlayer) target;
+            if (checkProtectFromMob(player, attacker)) {
+                ((EntityLiving) attacker).setAttackTarget(null);
+            }
+        }
+    }
+
+    @SubscribeEvent
     public void onLivingAttack(LivingAttackEvent event) {
         EntityLivingBase victim = event.getEntityLiving();
         DamageSource source = event.getSource();
@@ -516,11 +526,29 @@ public class RegionManager extends ConfigurableManager {
             Entity attacker = source.getTrueSource();
             if (attacker instanceof EntityPlayer && checkAttack(((EntityPlayer) attacker), victim)) {
                 event.setCanceled(true);
+            } else if (attacker instanceof IMob && victim instanceof EntityPlayer) {
+                EntityPlayer player = (EntityPlayer) victim;
+                if (checkProtectFromMob(player, attacker)) {
+                    event.setCanceled(true);
+                }
             }
         } else if (source.isProjectile()) {
             Entity attacker = source.getTrueSource();
             if (attacker instanceof EntityPlayer && checkAttack(((EntityPlayer) attacker), victim)) {
                 event.setCanceled(true);
+            } else if (attacker instanceof IMob && victim instanceof EntityPlayer) {
+                EntityPlayer player = (EntityPlayer) victim;
+                if (checkProtectFromMob(player, attacker)) {
+                    event.setCanceled(true);
+                }
+            }
+        } else if (source instanceof EntityDamageSource) {
+            Entity attacker = source.getTrueSource();
+            if (attacker instanceof IMob && victim instanceof EntityPlayer) {
+                EntityPlayer player = (EntityPlayer) victim;
+                if (checkProtectFromMob(player, attacker)) {
+                    event.setCanceled(true);
+                }
             }
         }
     }
@@ -624,6 +652,11 @@ public class RegionManager extends ConfigurableManager {
                 }
             }
         }
+    }
+
+    private boolean checkProtectFromMob(EntityPlayer player, Entity mob) {
+        Region targetRegion = getRegion(new Location(player));
+        return targetRegion != null && targetRegion.isPreventingMobAttacks();
     }
 
     private boolean checkAttack(EntityPlayer player, Entity target) {

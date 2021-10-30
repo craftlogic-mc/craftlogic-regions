@@ -62,7 +62,7 @@ public class WorldRegionManager extends ConfigurableManager {
     public Region createRegion(Location start, Location end, UUID owner) {
         UUID id;
         while (regions.containsKey(id = UUID.randomUUID())) {}
-        Region region = new Region(id, owner, start, end, defaultPvP, false, false, new HashMap<>());
+        Region region = new Region(id, owner, start, end, defaultPvP, false, false, false, new HashMap<>());
         regions.put(id, region);
         setDirty(true);
         return region;
@@ -113,7 +113,7 @@ public class WorldRegionManager extends ConfigurableManager {
         UUID owner;
         final Map<UUID, Set<RegionAbility>> members;
         final Location start, end;
-        boolean explosions, pvp, protectingHostiles;
+        boolean explosions, pvp, protectingHostiles, preventingMobAttacks;
 
         public Region(Dimension dimension, UUID id, JsonObject root) {
             this(id,
@@ -123,17 +123,19 @@ public class WorldRegionManager extends ConfigurableManager {
                 JsonUtils.getBoolean(root, "pvp", false),
                 JsonUtils.getBoolean(root, "explosions", false),
                 JsonUtils.getBoolean(root, "protectingHostiles", false),
+                JsonUtils.getBoolean(root, "preventingMobAttacks", false),
                 root.has("members") ? parseMembers(JsonUtils.getJsonObject(root, "members")) : new HashMap<>()
             );
         }
 
-        public Region(UUID id, UUID owner, Location start, Location end, boolean pvp, boolean explosions, boolean protectingHostiles, Map<UUID, Set<RegionAbility>> members) {
+        public Region(UUID id, UUID owner, Location start, Location end, boolean pvp, boolean explosions, boolean protectingHostiles, boolean preventingMobAttacks, Map<UUID, Set<RegionAbility>> members) {
             this.id = id;
             this.owner = owner;
             this.start = start;
             this.end = end;
             this.pvp = pvp;
             this.protectingHostiles = protectingHostiles;
+            this.preventingMobAttacks = preventingMobAttacks;
             this.explosions = explosions;
             this.members = members;
         }
@@ -319,6 +321,14 @@ public class WorldRegionManager extends ConfigurableManager {
 
         public void setProtectingHostiles(boolean protectingHostiles) {
             this.protectingHostiles = protectingHostiles;
+        }
+
+        public boolean isPreventingMobAttacks() {
+            return preventingMobAttacks;
+        }
+
+        public void setPreventingMobAttacks(boolean preventingMobAttacks) {
+            this.preventingMobAttacks = preventingMobAttacks;
         }
 
         /**A better method name, maybe?*/

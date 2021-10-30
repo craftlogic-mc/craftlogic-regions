@@ -20,13 +20,13 @@ import java.util.*;
 public class CommandRegion extends CommandBase {
     public CommandRegion() {
         super("region", 1,
-            "pvp|hostiles|explosions",
+            "pvp|hostiles|mob_attacks|explosions",
             "expel|transfer <target:OfflinePlayer>",
             "invite <target:OfflinePlayer>",
             "invite <target:OfflinePlayer> <abilities>...",
             "teleport <region:Region>",
-            "delete|claim|info|override",
-            "claim <name>",
+            "delete|create|claim|info|override",
+            "create|claim <name>",
             "info <region:Region>",
             "<region:Region>",
             ""
@@ -266,6 +266,26 @@ public class CommandRegion extends CommandBase {
                     }
                     break;
                 }
+                case "mob_attacks": {
+                    Player sender = ctx.senderAsPlayer();
+                    WorldRegionManager.Region region = regionManager.getRegion(sender.getLocation());
+                    if (region != null) {
+                        if (region.isOwner(sender) && ctx.checkPermission(true, "commands.region.mob_attacks", 1)
+                            || sender.hasPermission("commands.region.admin.mob_attacks")) {
+
+                            boolean attacks = !region.isPreventingMobAttacks();
+                            region.setPreventingMobAttacks(attacks);
+                            region.getManager().setDirty(true);
+                            sender.sendMessage(Text.translation("commands.region.mob_attacks." + (attacks ? "on" : "off")).color(attacks ? TextFormatting.GREEN : TextFormatting.RED));
+                        } else {
+                            throw new CommandException("commands.region.not_owning");
+                        }
+                    } else {
+                        throw new CommandException("commands.region.not_found");
+                    }
+                    break;
+                }
+                case "create":
                 case "claim": {
                     throw new CommandException("commands.region.claim_wand");
                 }
