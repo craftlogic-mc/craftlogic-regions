@@ -13,6 +13,7 @@ import ru.craftlogic.api.world.OfflinePlayer;
 import ru.craftlogic.api.world.Player;
 import ru.craftlogic.regions.RegionManager;
 import ru.craftlogic.regions.WorldRegionManager;
+import ru.craftlogic.regions.WorldRegionManager.Region;
 
 import java.io.IOException;
 import java.util.*;
@@ -20,7 +21,7 @@ import java.util.*;
 public class CommandRegion extends CommandBase {
     public CommandRegion() {
         super("region", 1,
-            "pvp|hostiles|mob_attacks|explosions",
+            "pvp|hostiles|mob_attacks|explosions|projectiles",
             "expel|transfer <target:OfflinePlayer>",
             "invite <target:OfflinePlayer>",
             "invite <target:OfflinePlayer> <abilities>...",
@@ -43,7 +44,7 @@ public class CommandRegion extends CommandBase {
                 case "teleport": {
                     Player sender = ctx.senderAsPlayer();
                     UUID regionId = ctx.get("region").asUUID();
-                    WorldRegionManager.Region region = regionManager.getRegion(regionId);
+                    Region region = regionManager.getRegion(regionId);
                     if (region != null) {
                         if ((region.isOwner(sender) || region.isMember(sender)) && sender.hasPermission("commands.region.teleport")
                             || sender.hasPermission("commands.region.admin.teleport")) {
@@ -76,7 +77,7 @@ public class CommandRegion extends CommandBase {
                 case "invite": {
                     Player sender = ctx.senderAsPlayer();
                     OfflinePlayer target = ctx.get("target").asOfflinePlayer();
-                    WorldRegionManager.Region region = regionManager.getRegion(sender.getLocation());
+                    Region region = regionManager.getRegion(sender.getLocation());
                     if (region != null) {
                         boolean admin = sender.hasPermission("region.admin.invite");
                         if (!region.isOwner(sender) && !admin) {
@@ -124,7 +125,7 @@ public class CommandRegion extends CommandBase {
                 case "expel": {
                     Player sender = ctx.senderAsPlayer();
                     OfflinePlayer target = ctx.get("target").asOfflinePlayer();
-                    WorldRegionManager.Region region = regionManager.getRegion(sender.getLocation());
+                    Region region = regionManager.getRegion(sender.getLocation());
                     if (region == null) {
                         throw new CommandException("commands.region.not_found");
                     }
@@ -149,14 +150,14 @@ public class CommandRegion extends CommandBase {
                     if (target == sender) {
                         throw new CommandException("commands.region.yourself");
                     }
-                    WorldRegionManager.Region region = regionManager.getRegion(sender.getLocation());
+                    Region region = regionManager.getRegion(sender.getLocation());
                     if (region == null) {
                         throw new CommandException("commands.region.not_found");
                     }
                     if (!region.isOwner(sender) && !sender.hasPermission("region.admin.transfer")) {
                         throw new CommandException("commands.region.not_owning");
                     }
-                    List<WorldRegionManager.Region> alreadyOwnedRegions = regionManager.getPlayerRegions(target);
+                    List<Region> alreadyOwnedRegions = regionManager.getPlayerRegions(target);
                     int maxCount = target.getPermissionMetadata("region.max-maxCount", 5, Integer::parseInt);
                     int maxArea = target.getPermissionMetadata("region.max-area", 100 * 100, Integer::parseInt);
                     if (alreadyOwnedRegions.size() >= maxCount) {
@@ -210,79 +211,23 @@ public class CommandRegion extends CommandBase {
                     break;
                 }
                 case "explosions": {
-                    Player sender = ctx.senderAsPlayer();
-                    WorldRegionManager.Region region = regionManager.getRegion(sender.getLocation());
-                    if (region != null) {
-                        if (region.isOwner(sender) && ctx.checkPermission(true, "commands.region.explosions", 1)
-                            || sender.hasPermission("commands.region.admin.explosions")) {
-
-                            boolean explosions = !region.isExplosions();
-                            region.setExplosions(explosions);
-                            region.getManager().setDirty(true);
-                            sender.sendMessage(Text.translation("commands.region.explosions." + (explosions ? "on" : "off")).color(explosions ? TextFormatting.RED : TextFormatting.GREEN));
-                        } else {
-                            throw new CommandException("commands.region.not_owning");
-                        }
-                    } else {
-                        throw new CommandException("commands.region.not_found");
-                    }
+                    booleanFlag(ctx, regionManager, "explosions", Region::isExplosions, Region::setExplosions, true);
                     break;
                 }
                 case "pvp": {
-                    Player sender = ctx.senderAsPlayer();
-                    WorldRegionManager.Region region = regionManager.getRegion(sender.getLocation());
-                    if (region != null) {
-                        if (region.isOwner(sender) && ctx.checkPermission(true, "commands.region.pvp", 1)
-                            || sender.hasPermission("commands.region.admin.pvp")) {
-
-                            boolean pvp = !region.isPvP();
-                            region.setPvP(pvp);
-                            region.getManager().setDirty(true);
-                            sender.sendMessage(Text.translation("commands.region.pvp." + (pvp ? "on" : "off")).color(pvp ? TextFormatting.RED : TextFormatting.GREEN));
-                        } else {
-                            throw new CommandException("commands.region.not_owning");
-                        }
-                    } else {
-                        throw new CommandException("commands.region.not_found");
-                    }
+                    booleanFlag(ctx, regionManager, "pvp", Region::isPvP, Region::setPvP, true);
                     break;
                 }
                 case "hostiles": {
-                    Player sender = ctx.senderAsPlayer();
-                    WorldRegionManager.Region region = regionManager.getRegion(sender.getLocation());
-                    if (region != null) {
-                        if (region.isOwner(sender) && ctx.checkPermission(true, "commands.region.hostiles", 1)
-                            || sender.hasPermission("commands.region.admin.hostiles")) {
-
-                            boolean hostiles = !region.isProtectingHostiles();
-                            region.setProtectingHostiles(hostiles);
-                            region.getManager().setDirty(true);
-                            sender.sendMessage(Text.translation("commands.region.hostiles." + (hostiles ? "on" : "off")).color(hostiles ? TextFormatting.RED : TextFormatting.GREEN));
-                        } else {
-                            throw new CommandException("commands.region.not_owning");
-                        }
-                    } else {
-                        throw new CommandException("commands.region.not_found");
-                    }
+                    booleanFlag(ctx, regionManager, "hostiles", Region::isProtectingHostiles, Region::setProtectingHostiles, true);
                     break;
                 }
                 case "mob_attacks": {
-                    Player sender = ctx.senderAsPlayer();
-                    WorldRegionManager.Region region = regionManager.getRegion(sender.getLocation());
-                    if (region != null) {
-                        if (region.isOwner(sender) && ctx.checkPermission(true, "commands.region.mob_attacks", 1)
-                            || sender.hasPermission("commands.region.admin.mob_attacks")) {
-
-                            boolean attacks = !region.isPreventingMobAttacks();
-                            region.setPreventingMobAttacks(attacks);
-                            region.getManager().setDirty(true);
-                            sender.sendMessage(Text.translation("commands.region.mob_attacks." + (attacks ? "on" : "off")).color(attacks ? TextFormatting.GREEN : TextFormatting.RED));
-                        } else {
-                            throw new CommandException("commands.region.not_owning");
-                        }
-                    } else {
-                        throw new CommandException("commands.region.not_found");
-                    }
+                    booleanFlag(ctx, regionManager, "mob_attacks", Region::isPreventingMobAttacks, Region::setPreventingMobAttacks, false);
+                    break;
+                }
+                case "projectiles": {
+                    booleanFlag(ctx, regionManager, "projectiles", Region::isProjectiles, Region::setProjectiles, true);
                     break;
                 }
                 case "create":
@@ -299,9 +244,36 @@ public class CommandRegion extends CommandBase {
         }
     }
 
+    interface Getter {
+        boolean get(Region region);
+    }
+
+    interface Setter {
+        void set(Region region, boolean value);
+    }
+
+    private static void booleanFlag(CommandContext ctx, RegionManager regionManager, String name, Getter getter, Setter setter, boolean negative) throws CommandException {
+        Player sender = ctx.senderAsPlayer();
+        Region region = regionManager.getRegion(sender.getLocation());
+        if (region != null) {
+            if (region.isOwner(sender) && ctx.checkPermission(true, "commands.region." + name, 1)
+                || sender.hasPermission("commands.region.admin." + name)) {
+
+                boolean value = !getter.get(region);
+                setter.set(region, value);
+                region.getManager().setDirty(true);
+                sender.sendMessage(Text.translation("commands.region."  + name + "." + (value ? "on" : "off")).color(value ^ negative ? TextFormatting.GREEN : TextFormatting.RED));
+            } else {
+                throw new CommandException("commands.region.not_owning");
+            }
+        } else {
+            throw new CommandException("commands.region.not_found");
+        }
+    }
+
     private static void info(CommandContext ctx, Server server, RegionManager regionManager) throws CommandException {
         CommandSender sender;
-        WorldRegionManager.Region region;
+        Region region;
         if (ctx.has("region")) {
             sender = ctx.sender();
             region = regionManager.getRegion(ctx.get("region").asUUID());
@@ -326,7 +298,7 @@ public class CommandRegion extends CommandBase {
         }
     }
 
-    private static void expel(WorldRegionManager.Region region, Player sender, OfflinePlayer target) {
+    private static void expel(Region region, Player sender, OfflinePlayer target) {
         sender.sendQuestion(
             "region.expel",
             Text.translation("commands.region.expel.question")
@@ -352,7 +324,7 @@ public class CommandRegion extends CommandBase {
     }
 
     private static void deleteRegion(Player sender, RegionManager regionManager) throws CommandException {
-        WorldRegionManager.Region region = regionManager.getRegion(sender.getLocation());
+        Region region = regionManager.getRegion(sender.getLocation());
         if (region != null) {
             if (region.isOwner(sender) || sender.hasPermission("region.admin.delete")) {
                 sender.sendQuestion(
@@ -386,7 +358,7 @@ public class CommandRegion extends CommandBase {
         }
     }
 
-    public static void sendRegionInfo(Server server, CommandSender sender, WorldRegionManager.Region region) {
+    public static void sendRegionInfo(Server server, CommandSender sender, Region region) {
         PlayerManager playerManager = server.getPlayerManager();
         OfflinePlayer owner = playerManager.getOffline(region.getOwner());
         sender.sendMessage(Text.translation("commands.region.info.owner").arg(owner != null ? owner.getName() : region.getOwner().toString()));

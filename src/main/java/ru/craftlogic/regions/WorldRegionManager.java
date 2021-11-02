@@ -62,7 +62,7 @@ public class WorldRegionManager extends ConfigurableManager {
     public Region createRegion(Location start, Location end, UUID owner) {
         UUID id;
         while (regions.containsKey(id = UUID.randomUUID())) {}
-        Region region = new Region(id, owner, start, end, defaultPvP, false, false, false, new HashMap<>());
+        Region region = new Region(id, owner, start, end, defaultPvP, false, false, false, false, new HashMap<>());
         regions.put(id, region);
         setDirty(true);
         return region;
@@ -113,7 +113,7 @@ public class WorldRegionManager extends ConfigurableManager {
         UUID owner;
         final Map<UUID, Set<RegionAbility>> members;
         final Location start, end;
-        boolean explosions, pvp, protectingHostiles, preventingMobAttacks;
+        boolean explosions, pvp, projectiles, protectingHostiles, preventingMobAttacks;
 
         public Region(Dimension dimension, UUID id, JsonObject root) {
             this(id,
@@ -122,13 +122,14 @@ public class WorldRegionManager extends ConfigurableManager {
                 Location.deserialize(dimension.getVanilla().getId(), root.getAsJsonObject("end")),
                 JsonUtils.getBoolean(root, "pvp", false),
                 JsonUtils.getBoolean(root, "explosions", false),
+                JsonUtils.getBoolean(root, "projectiles", false),
                 JsonUtils.getBoolean(root, "protectingHostiles", false),
                 JsonUtils.getBoolean(root, "preventingMobAttacks", false),
                 root.has("members") ? parseMembers(JsonUtils.getJsonObject(root, "members")) : new HashMap<>()
             );
         }
 
-        public Region(UUID id, UUID owner, Location start, Location end, boolean pvp, boolean explosions, boolean protectingHostiles, boolean preventingMobAttacks, Map<UUID, Set<RegionAbility>> members) {
+        public Region(UUID id, UUID owner, Location start, Location end, boolean pvp, boolean explosions, boolean projectiles, boolean protectingHostiles, boolean preventingMobAttacks, Map<UUID, Set<RegionAbility>> members) {
             this.id = id;
             this.owner = owner;
             this.start = start;
@@ -275,7 +276,7 @@ public class WorldRegionManager extends ConfigurableManager {
         }
 
         public boolean canLaunchProjectiles(UUID target) {
-            return isOwner(target) || getMemberAbilities(target).contains(RegionAbility.LAUNCH_PROJECTILES);
+            return isProjectiles() || isOwner(target) || getMemberAbilities(target).contains(RegionAbility.LAUNCH_PROJECTILES);
         }
 
         public Set<RegionAbility> getMemberAbilities(UUID target) {
@@ -313,6 +314,14 @@ public class WorldRegionManager extends ConfigurableManager {
 
         public void setPvP(boolean pvp) {
             this.pvp = pvp;
+        }
+
+        public boolean isProjectiles() {
+            return projectiles;
+        }
+
+        public void setProjectiles(boolean projectiles) {
+            this.projectiles = projectiles;
         }
 
         public boolean isProtectingHostiles() {
