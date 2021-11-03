@@ -374,13 +374,15 @@ public class RegionManager extends ConfigurableManager {
 
     @SubscribeEvent
     public void onPlayerTeleportHome(PlayerTeleportHomeEvent event) {
-        Region targetRegion = getRegion(event.bedLocation);
-        if (targetRegion != null && !targetRegion.canInteractBlocks(event.player)) {
-            PlayerManager playerManager = event.player.getServer().getPlayerManager();
-            OfflinePlayer owner = playerManager.getOffline(targetRegion.getOwner());
-            if (owner != null && !event.player.hasPermission("commands.home.teleport.others")) {
-                event.context.sendMessage(Text.translation("commands.home.region_permission").arg(owner.getName()).red());
-                event.setCanceled(true);
+        if (event.bedLocation != null) {
+            Region targetRegion = getRegion(event.bedLocation);
+            if (targetRegion != null && !targetRegion.canInteractBlocks(event.player)) {
+                PlayerManager playerManager = event.player.getServer().getPlayerManager();
+                OfflinePlayer owner = playerManager.getOffline(targetRegion.getOwner());
+                if (owner != null && !event.player.hasPermission("commands.home.teleport.others")) {
+                    event.context.sendMessage(Text.translation("commands.home.region_permission").arg(owner.getName()).red());
+                    event.setCanceled(true);
+                }
             }
         }
     }
@@ -627,7 +629,7 @@ public class RegionManager extends ConfigurableManager {
             if (thrower instanceof EntityPlayer) {
                 Region region = getRegion(new Location(target.entityHit));
                 if (region != null) {
-                    if (!checkAttack(((EntityPlayer) thrower), target.entityHit)) {
+                    if (checkAttack(((EntityPlayer) thrower), target.entityHit)) {
                         event.setCanceled(true);
                         if (throwable instanceof EntityPotion) {
                             throwable.entityDropItem(((EntityPotion) throwable).getPotion(), 0F);
