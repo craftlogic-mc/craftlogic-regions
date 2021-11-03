@@ -367,6 +367,15 @@ public class WorldRegionManager extends ConfigurableManager {
             if (explosions) {
                 result.addProperty("explosions", true);
             }
+            if (projectiles) {
+                result.addProperty("projectiles", true);
+            }
+            if (preventingMobAttacks) {
+                result.addProperty("preventingMobAttacks", true);
+            }
+            if (protectingHostiles) {
+                result.addProperty("protectingHostiles", true);
+            }
             if (!this.members.isEmpty()) {
                 JsonObject members = new JsonObject();
                 for (Map.Entry<UUID, Set<RegionAbility>> entry : this.members.entrySet()) {

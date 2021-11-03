@@ -290,7 +290,7 @@ public class RegionManager extends ConfigurableManager {
                 }
             }
         } else {
-            WorldRegionManager m = getWorld(world.getName());
+            WorldRegionManager m = getWorld(world.getDimension().getVanilla().getName());
             if (m != null) {
                 List<Region> regions = m.getPlayerRegions(owner);
                 if (regions != null) {
@@ -599,8 +599,7 @@ public class RegionManager extends ConfigurableManager {
     public void onHookEntity(PlayerHookEntityEvent event) {
         EntityPlayer angler = event.getAngler();
         Entity target = event.getEntity();
-        Location location = new Location(target.getEntityWorld(), new BlockPos(target));
-        Region region = getRegion(location);
+        Region region = getRegion(new Location(target));
         if (region != null && !region.canHookEntity(angler.getGameProfile().getId())) {
             event.setCanceled(true);
         }
