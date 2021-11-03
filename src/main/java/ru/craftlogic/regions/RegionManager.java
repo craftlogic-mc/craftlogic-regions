@@ -50,6 +50,7 @@ import ru.craftlogic.api.event.block.FarmlandTrampleEvent;
 import ru.craftlogic.api.event.block.FluidFlowEvent;
 import ru.craftlogic.api.event.block.PistonCheckCanMoveEvent;
 import ru.craftlogic.api.event.player.PlayerCheckCanEditEvent;
+import ru.craftlogic.api.event.player.PlayerHookEntityEvent;
 import ru.craftlogic.api.event.player.PlayerTeleportHomeEvent;
 import ru.craftlogic.api.math.Bounding;
 import ru.craftlogic.api.math.BoxBounding;
@@ -112,7 +113,7 @@ public class RegionManager extends ConfigurableManager {
         commandManager.registerArgumentType("Region", false, ctx -> {
             RegionManager regionManager = ctx.server().getManager(RegionManager.class);
             CommandSender sender = ctx.sender();
-            return (sender instanceof Player ? regionManager.getPlayerRegions((Player) sender) : regionManager.getAllLoadedRegions())
+            return (sender instanceof Player ? regionManager.getPlayerRegions((Player) sender, ((Player) sender).getWorld()) : regionManager.getAllLoadedRegions())
                 .stream()
                 .map(WorldRegionManager.Region::getId)
                 .map(UUID::toString)
@@ -196,7 +197,7 @@ public class RegionManager extends ConfigurableManager {
         int maxCount = sender.getPermissionMetadata("region.max-count", 5, Integer::parseInt);
 
         int area = width * depth;
-        int count = getPlayerRegions(sender).size();
+        int count = getPlayerRegions(sender, sender.getWorld()).size();
 
         if (count >= maxCount) {
             throw new CommandException("commands.region.create.too_many", count, maxCount);
@@ -275,15 +276,26 @@ public class RegionManager extends ConfigurableManager {
         return null;
     }
 
-    public List<Region> getPlayerRegions(OfflinePlayer owner) {
-        return getPlayerRegions(owner.getId());
+    public List<Region> getPlayerRegions(OfflinePlayer owner, World world) {
+        return getPlayerRegions(owner.getId(), world);
     }
 
-    public List<Region> getPlayerRegions(UUID owner) {
-        List<Region> result;
-        for (WorldRegionManager manager : managers.values()) {
-            if ((result = manager.getPlayerRegions(owner)) != null) {
-                return result;
+    public List<Region> getPlayerRegions(UUID owner, World world) {
+        if (world == null) {
+            List<Region> result = new ArrayList<>();
+            for (WorldRegionManager manager : managers.values()) {
+                List<Region> regions = manager.getPlayerRegions(owner);
+                if (regions != null) {
+                    result.addAll(regions);
+                }
+            }
+        } else {
+            WorldRegionManager m = getWorld(world.getName());
+            if (m != null) {
+                List<Region> regions = m.getPlayerRegions(owner);
+                if (regions != null) {
+                    return new ArrayList<>(regions);
+                }
             }
         }
         return Collections.emptyList();
@@ -584,6 +596,17 @@ public class RegionManager extends ConfigurableManager {
     }
 
     @SubscribeEvent
+    public void onHookEntity(PlayerHookEntityEvent event) {
+        EntityPlayer angler = event.getAngler();
+        Entity target = event.getEntity();
+        Location location = new Location(target.getEntityWorld(), new BlockPos(target));
+        Region region = getRegion(location);
+        if (region != null && !region.canHookEntity(angler.getGameProfile().getId())) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
     public void onArrowHit(ProjectileImpactEvent.Arrow event) {
         EntityArrow arrow = event.getArrow();
         RayTraceResult target = event.getRayTraceResult();
@@ -605,9 +628,8 @@ public class RegionManager extends ConfigurableManager {
             if (thrower instanceof EntityPlayer) {
                 Region region = getRegion(new Location(target.entityHit));
                 if (region != null) {
-                    if (!region.canInteractEntities(thrower.getUniqueID())) {
+                    if (!checkAttack(((EntityPlayer) thrower), target.entityHit)) {
                         event.setCanceled(true);
-                        ((EntityPlayer) thrower).sendStatusMessage(Text.translation("chat.region.interact.entities").red().build(), true);
                         if (throwable instanceof EntityPotion) {
                             throwable.entityDropItem(((EntityPotion) throwable).getPotion(), 0F);
                             throwable.setDead();

@@ -279,6 +279,14 @@ public class WorldRegionManager extends ConfigurableManager {
             return isProjectiles() || isOwner(target) || getMemberAbilities(target).contains(RegionAbility.LAUNCH_PROJECTILES);
         }
 
+        public boolean canHookEntity(OfflinePlayer target) {
+            return canHookEntity(target.getId());
+        }
+
+        public boolean canHookEntity(UUID target) {
+            return isOwner(target) || getMemberAbilities(target).contains(RegionAbility.HOOK_ENTITIES);
+        }
+
         public Set<RegionAbility> getMemberAbilities(UUID target) {
             return this.members.getOrDefault(target, Collections.emptySet());
         }
@@ -286,7 +294,6 @@ public class WorldRegionManager extends ConfigurableManager {
         public void setMemberAbilities(OfflinePlayer target, Set<RegionAbility> abilities) {
             setMemberAbilities(target.getId(), abilities);
         }
-
 
         public void setMemberAbilities(UUID target, Set<RegionAbility> abilities) {
             this.members.put(target, abilities);
@@ -393,6 +400,12 @@ public class WorldRegionManager extends ConfigurableManager {
     }
 
     public enum RegionAbility {
-        INTERACT_BLOCKS, INTERACT_ENTITIES, EDIT_BLOCKS, ATTACK_HOSTILES, ATTACK_NEUTRAL, LAUNCH_PROJECTILES
+        INTERACT_BLOCKS,
+        INTERACT_ENTITIES,
+        EDIT_BLOCKS,
+        ATTACK_HOSTILES,
+        ATTACK_NEUTRAL,
+        LAUNCH_PROJECTILES,
+        HOOK_ENTITIES
     }
 }

@@ -157,7 +157,7 @@ public class CommandRegion extends CommandBase {
                     if (!region.isOwner(sender) && !sender.hasPermission("region.admin.transfer")) {
                         throw new CommandException("commands.region.not_owning");
                     }
-                    List<Region> alreadyOwnedRegions = regionManager.getPlayerRegions(target);
+                    List<Region> alreadyOwnedRegions = regionManager.getPlayerRegions(target, sender.getWorld());
                     int maxCount = target.getPermissionMetadata("region.max-maxCount", 5, Integer::parseInt);
                     int maxArea = target.getPermissionMetadata("region.max-area", 100 * 100, Integer::parseInt);
                     if (alreadyOwnedRegions.size() >= maxCount) {
