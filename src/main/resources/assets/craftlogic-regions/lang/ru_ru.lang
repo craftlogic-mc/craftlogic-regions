@@ -72,6 +72,12 @@ commands.region.transfer.max_count=Количество регионов пол�
 commands.region.transfer.max_area=Площадь вашего региона превышает лимит получателя: %s > %s
 commands.region.override.enabled=Режим приоритета включен
 commands.region.override.disabled=Режим приоритета отключен
+commands.region.list.none=У данного игрока нет регионов в указанном мире
+commands.region.list.world=Укажите мир, в котором необходимо искать регионы
+commands.region.list.header=Регионы %s в мире %s:
+commands.region.list.id=ID
+commands.region.list.teleport=Телепорт
+
 commands.regions.no_block=Нет блока в поле зрения
 commands.regions.no_item=Нет предмета в ведущей руке
 commands.regions.already_blacklisted=Элемент уже находится в черном списке

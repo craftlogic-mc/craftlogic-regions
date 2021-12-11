@@ -7,10 +7,7 @@ import ru.craftlogic.api.command.CommandContext;
 import ru.craftlogic.api.server.PlayerManager;
 import ru.craftlogic.api.server.Server;
 import ru.craftlogic.api.text.Text;
-import ru.craftlogic.api.world.CommandSender;
-import ru.craftlogic.api.world.LocatableCommandSender;
-import ru.craftlogic.api.world.OfflinePlayer;
-import ru.craftlogic.api.world.Player;
+import ru.craftlogic.api.world.*;
 import ru.craftlogic.regions.RegionManager;
 import ru.craftlogic.regions.WorldRegionManager;
 import ru.craftlogic.regions.WorldRegionManager.Region;
@@ -23,6 +20,8 @@ public class CommandRegion extends CommandBase {
         super("region", 1,
             "pvp|hostiles|mob_attacks|explosions|projectiles",
             "expel|transfer <target:OfflinePlayer>",
+            "list <target:OfflinePlayer>",
+            "list <target:OfflinePlayer> <world:World>",
             "invite <target:OfflinePlayer>",
             "invite <target:OfflinePlayer> <abilities>...",
             "teleport <region:Region>",
@@ -33,6 +32,10 @@ public class CommandRegion extends CommandBase {
             ""
         );
         Collections.addAll(aliases, "rg", "reg");
+    }
+
+    private <T> T error(String message, Object... args) throws CommandException {
+        throw new CommandException(message, args);
     }
 
     @Override
@@ -158,7 +161,7 @@ public class CommandRegion extends CommandBase {
                         throw new CommandException("commands.region.not_owning");
                     }
                     List<Region> alreadyOwnedRegions = regionManager.getPlayerRegions(target, sender.getWorld());
-                    int maxCount = target.getPermissionMetadata("region.max-maxCount", 5, Integer::parseInt);
+                    int maxCount = target.getPermissionMetadata("region.max-count", 5, Integer::parseInt);
                     int maxArea = target.getPermissionMetadata("region.max-area", 100 * 100, Integer::parseInt);
                     if (alreadyOwnedRegions.size() >= maxCount) {
                         sender.sendMessage(
@@ -202,6 +205,36 @@ public class CommandRegion extends CommandBase {
                                 }
                             }
                         );
+                    }
+                    break;
+                }
+                case "list": {
+                    World world = ctx.has("world")
+                        ? ctx.get("world").asWorld()
+                        : ctx.sender() instanceof Player
+                            ? ctx.senderAsPlayer().getWorld()
+                            : error("commands.region.list.world");
+                    OfflinePlayer target = ctx.get("target").asOfflinePlayer();
+                    List<Region> regions = regionManager.getPlayerRegions(target, world);
+                    if (regions.isEmpty()) {
+                        ctx.sendMessage(Text.translation("commands.region.list.none").red());
+                    } else {
+                        Text<?, ?> message = Text.translation("commands.region.list.header").yellow()
+                            .arg(target.getName(), Text::gold)
+                            .arg(world.getName(), Text::gold);
+                        message.appendText("\n");
+                        int i = 1;
+                        for (Region region : regions) {
+                            String id = region.getId().toString();
+                            Text<?, ?> line = Text.string(String.valueOf(i++))
+                                .appendText(". [")
+                                .appendTranslate("commands.region.list.id", t -> t.green().suggestCommand(id))
+                                .appendText("] [")
+                                .appendTranslate("commands.region.list.teleport", t -> t.green().runCommand("/region teleport " + id))
+                                .appendText("]\n");
+                            message.append(line);
+                        }
+                        ctx.sendMessage(message);
                     }
                     break;
                 }

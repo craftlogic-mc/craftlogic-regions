@@ -72,6 +72,12 @@ commands.region.transfer.max_count=Receiver's region count exceeds their limit: 
 commands.region.transfer.max_area=Your region area exceeds receiver's limit: %s > %s
 commands.region.override.enabled=Priority mode enabled
 commands.region.override.disabled=Priority mode disabled
+commands.region.list.none=That player has no regions in the specified world
+commands.region.list.world=Please specify a world to search for regions in
+commands.region.list.header=%s's regions in world %s:
+commands.region.list.id=ID
+commands.region.list.teleport=Teleport
+
 commands.regions.no_block=No block in sight
 commands.regions.no_item=No item in main hand
 commands.regions.already_blacklisted=Element is already blacklisted
