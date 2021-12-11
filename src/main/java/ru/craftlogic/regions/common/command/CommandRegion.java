@@ -18,7 +18,7 @@ import java.util.*;
 public class CommandRegion extends CommandBase {
     public CommandRegion() {
         super("region", 1,
-            "pvp|hostiles|mob_attacks|explosions|projectiles",
+            "pvp|hostiles|mob_attacks|explosions|projectiles|mob_spawn",
             "expel|transfer <target:OfflinePlayer>",
             "list <target:OfflinePlayer>",
             "list <target:OfflinePlayer> <world:World>",

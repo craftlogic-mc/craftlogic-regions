@@ -387,6 +387,9 @@ public class WorldRegionManager extends ConfigurableManager {
             if (protectingHostiles) {
                 result.addProperty("protectingHostiles", true);
             }
+            if (!mobSpawn) {
+                result.addProperty("mobSpawn", false);
+            }
             if (!this.members.isEmpty()) {
                 JsonObject members = new JsonObject();
                 for (Map.Entry<UUID, Set<RegionAbility>> entry : this.members.entrySet()) {

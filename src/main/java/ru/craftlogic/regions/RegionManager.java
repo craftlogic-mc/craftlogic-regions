@@ -741,7 +741,7 @@ public class RegionManager extends ConfigurableManager {
         Location location = new Location(event.getWorld(), new BlockPos(entity));
         Region region = getRegion(location);
         if (region != null && !region.canSpawnMobs()) {
-            event.setCanceled(true);
+            event.setResult(Event.Result.DENY);
         }
     }
 
