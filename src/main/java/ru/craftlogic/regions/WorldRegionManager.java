@@ -62,7 +62,7 @@ public class WorldRegionManager extends ConfigurableManager {
     public Region createRegion(Location start, Location end, UUID owner) {
         UUID id;
         while (regions.containsKey(id = UUID.randomUUID())) {}
-        Region region = new Region(id, owner, start, end, defaultPvP, false, false, false, false, new HashMap<>());
+        Region region = new Region(id, owner, start, end, defaultPvP, false, false, false, false, true, new HashMap<>());
         regions.put(id, region);
         setDirty(true);
         return region;
@@ -113,7 +113,7 @@ public class WorldRegionManager extends ConfigurableManager {
         UUID owner;
         final Map<UUID, Set<RegionAbility>> members;
         final Location start, end;
-        boolean explosions, pvp, projectiles, protectingHostiles, preventingMobAttacks;
+        boolean explosions, pvp, projectiles, protectingHostiles, preventingMobAttacks, mobSpawn;
 
         public Region(Dimension dimension, UUID id, JsonObject root) {
             this(id,
@@ -125,19 +125,22 @@ public class WorldRegionManager extends ConfigurableManager {
                 JsonUtils.getBoolean(root, "projectiles", false),
                 JsonUtils.getBoolean(root, "protectingHostiles", false),
                 JsonUtils.getBoolean(root, "preventingMobAttacks", false),
+                JsonUtils.getBoolean(root, "mobSpawn", true),
                 root.has("members") ? parseMembers(JsonUtils.getJsonObject(root, "members")) : new HashMap<>()
             );
         }
 
-        public Region(UUID id, UUID owner, Location start, Location end, boolean pvp, boolean explosions, boolean projectiles, boolean protectingHostiles, boolean preventingMobAttacks, Map<UUID, Set<RegionAbility>> members) {
+        public Region(UUID id, UUID owner, Location start, Location end, boolean pvp, boolean explosions, boolean projectiles, boolean protectingHostiles, boolean preventingMobAttacks, boolean mobSpawn, Map<UUID, Set<RegionAbility>> members) {
             this.id = id;
             this.owner = owner;
             this.start = start;
             this.end = end;
             this.pvp = pvp;
+            this.projectiles = projectiles;
             this.protectingHostiles = protectingHostiles;
             this.preventingMobAttacks = preventingMobAttacks;
             this.explosions = explosions;
+            this.mobSpawn = mobSpawn;
             this.members = members;
         }
 
@@ -231,6 +234,10 @@ public class WorldRegionManager extends ConfigurableManager {
             owner = target;
         }
 
+        public boolean canSpawnMobs() {
+            return mobSpawn;
+        }
+
         public boolean canEditBlocks(OfflinePlayer target) {
             return canEditBlocks(target.getId());
         }
@@ -313,6 +320,10 @@ public class WorldRegionManager extends ConfigurableManager {
             } else if (!abilities.isEmpty()) {
                 abilities.remove(ability);
             }
+        }
+
+        public void setSpawnMobs(boolean mobSpawn) {
+            this.mobSpawn = mobSpawn;
         }
 
         public boolean isPvP() {

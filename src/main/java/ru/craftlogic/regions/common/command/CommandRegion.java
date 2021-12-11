@@ -263,6 +263,10 @@ public class CommandRegion extends CommandBase {
                     booleanFlag(ctx, regionManager, "projectiles", Region::isProjectiles, Region::setProjectiles, true);
                     break;
                 }
+                case "mob_spawn": {
+                    booleanFlag(ctx, regionManager, "mob_spawn", Region::canSpawnMobs, Region::setSpawnMobs, true);
+                    break;
+                }
                 case "create":
                 case "claim": {
                     throw new CommandException("commands.region.claim_wand");

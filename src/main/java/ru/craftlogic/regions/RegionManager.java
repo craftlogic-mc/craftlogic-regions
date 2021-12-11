@@ -28,10 +28,7 @@ import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.event.entity.living.LivingDestroyBlockEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.event.entity.living.LivingSetAttackTargetEvent;
+import net.minecraftforge.event.entity.living.*;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.FillBucketEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -735,6 +732,16 @@ public class RegionManager extends ConfigurableManager {
             event.setCanceled(true);
             Text<?, ?> message = Text.translation("chat.region.interact.blocks");
             player.sendStatusMessage(message.red().build(), true);
+        }
+    }
+
+    @SubscribeEvent
+    public void onEntitySpawn(LivingSpawnEvent.CheckSpawn event) {
+        EntityLivingBase entity = event.getEntityLiving();
+        Location location = new Location(event.getWorld(), new BlockPos(entity));
+        Region region = getRegion(location);
+        if (region != null && !region.canSpawnMobs()) {
+            event.setCanceled(true);
         }
     }
 
