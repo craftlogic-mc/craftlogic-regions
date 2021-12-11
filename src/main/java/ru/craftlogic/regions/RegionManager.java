@@ -51,6 +51,7 @@ import ru.craftlogic.api.event.block.FluidFlowEvent;
 import ru.craftlogic.api.event.block.PistonCheckCanMoveEvent;
 import ru.craftlogic.api.event.player.PlayerCheckCanEditEvent;
 import ru.craftlogic.api.event.player.PlayerHookEntityEvent;
+import ru.craftlogic.api.event.player.PlayerPlaceBoatEvent;
 import ru.craftlogic.api.event.player.PlayerTeleportHomeEvent;
 import ru.craftlogic.api.math.Bounding;
 import ru.craftlogic.api.math.BoxBounding;
@@ -691,7 +692,7 @@ public class RegionManager extends ConfigurableManager {
                 return true;
             }
         } else if (target instanceof INpc) {
-            if (targetRegion != null  && !targetRegion.canAttackNeutral(player.getUniqueID())) {
+            if (targetRegion != null && !targetRegion.canAttackNeutral(player.getUniqueID())) {
                 player.sendStatusMessage(Text.translation("chat.region.attack.npc").red().build(), true);
                 return true;
             }
@@ -722,6 +723,19 @@ public class RegionManager extends ConfigurableManager {
             }
         }
         return false;
+    }
+
+    @SubscribeEvent
+    public void onPlaceBoat(PlayerPlaceBoatEvent event) {
+        EntityPlayer player = event.getEntityPlayer();
+        RayTraceResult target = event.target;
+        Location location = new Location(player.world, target.hitVec);
+        Region region = getRegion(location);
+        if (region != null && !region.canInteractBlocks(player.getUniqueID())) {
+            event.setCanceled(true);
+            Text<?, ?> message = Text.translation("chat.region.interact.blocks");
+            player.sendStatusMessage(message.red().build(), true);
+        }
     }
 
     @SubscribeEvent
