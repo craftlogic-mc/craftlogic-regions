@@ -2,12 +2,7 @@ package ru.craftlogic.regions.common.command;
 
 import net.minecraft.block.Block;
 import net.minecraft.command.CommandException;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.Vec3d;
 import ru.craftlogic.api.command.CommandBase;
 import ru.craftlogic.api.command.CommandContext;
 import ru.craftlogic.api.text.Text;
@@ -40,25 +35,7 @@ public class CommandRegions extends CommandBase {
             case "block":
             case "door":
             case "chest": {
-                Block block;
-                if (ctx.has("id")) {
-                    block = ctx.get("id").asBlock();
-                } else {
-                    Player player = ctx.senderAsPlayer();
-                    EntityPlayerMP entity = player.getEntity();
-                    boolean creative = entity.capabilities.isCreativeMode;
-                    double distance = creative ? 5 : 4.5;
-                    Vec3d eyes = entity.getPositionEyes(1);
-                    Vec3d look = entity.getLook(1);
-                    Vec3d end = eyes.add(look.x * distance, look.y * distance, look.z * distance);
-                    RayTraceResult target = entity.world.rayTraceBlocks(eyes, end, false, false, true);
-
-                    if (target != null && target.typeOfHit == RayTraceResult.Type.BLOCK) {
-                        block = entity.world.getBlockState(target.getBlockPos()).getBlock();
-                    } else {
-                        throw new CommandException("commands.regions.no_block");
-                    }
-                }
+                Block block = ctx.has("id") ? ctx.get("id").asBlock() : ctx.getPlayerLookingBlock();
                 switch (ctx.action(0)) {
                     case "whitelist": {
                         if (regionManager.whitelistBlockUsage.add(block.getRegistryName())) {
@@ -85,18 +62,7 @@ public class CommandRegions extends CommandBase {
                 break;
             }
             case "item": {
-                Item item;
-                if (ctx.has("id")) {
-                    item = ctx.get("id").asItem();
-                } else {
-                    Player player = ctx.senderAsPlayer();
-                    ItemStack heldItem = player.getHeldItem(EnumHand.MAIN_HAND);
-                    if (!heldItem.isEmpty()) {
-                        item = heldItem.getItem();
-                    } else {
-                        throw new CommandException("commands.regions.no_item");
-                    }
-                }
+                Item item = ctx.has("id") ? ctx.get("id").asItem() : ctx.getPlayerHeldItem();
                 switch (ctx.action(0)) {
                     case "blacklist": {
                         if (!regionManager.blacklistItemUsage.add(item.getRegistryName())) {
