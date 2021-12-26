@@ -77,15 +77,17 @@ import java.util.stream.Collectors;
 public class RegionManager extends ConfigurableManager {
     private static final Logger LOGGER = LogManager.getLogger("RegionManager");
     private static final int SYNC_COOLDOWN = 10 * 20;
-
+    private static final GameProfile MINECRAFT = new GameProfile(UUID.fromString("41C82C87-7AfB-4024-BA57-13D2C99CAE77"), "[Minecraft]");
     final Map<String, WorldRegionManager> managers = new HashMap<>();
+    public Set<ResourceLocation> whitelistBlockUsage = new HashSet<>();
+    public Set<ResourceLocation> blacklistItemUsage = new HashSet<>();
+    public Set<ResourceLocation> whitelistBlockBreakage = new HashSet<>();
+    public Set<ResourceLocation> chests = new HashSet<>();
+    public Set<ResourceLocation> doors = new HashSet<>();
     private int updateCounter;
     private boolean loaded;
     private boolean defaultPvP;
-    public Set<ResourceLocation> whitelistBlockUsage = new HashSet<>();
-    public Set<ResourceLocation> blacklistItemUsage = new HashSet<>();
-    public Set<ResourceLocation> chests = new HashSet<>();
-    public Set<ResourceLocation> doors = new HashSet<>();
+    private boolean omitRegionSave = false;
 
     public RegionManager(Server server, Path settingsDirectory) {
         super(server, settingsDirectory.resolve("regions.json"), LOGGER);
@@ -112,16 +114,16 @@ public class RegionManager extends ConfigurableManager {
             RegionManager regionManager = ctx.server().getManager(RegionManager.class);
             CommandSender sender = ctx.sender();
             return (sender instanceof Player ? regionManager.getPlayerRegions((Player) sender, ((Player) sender).getWorld()) : regionManager.getAllLoadedRegions())
-                .stream()
-                .map(WorldRegionManager.Region::getId)
-                .map(UUID::toString)
-                .collect(Collectors.toList());
+                    .stream()
+                    .map(WorldRegionManager.Region::getId)
+                    .map(UUID::toString)
+                    .collect(Collectors.toList());
         });
     }
 
     private void readResourceLocations(Set<ResourceLocation> list, JsonObject config, String key) {
         list.clear();
-        if (config.has(key))  {
+        if (config.has(key)) {
             JsonArray array = config.getAsJsonArray(key);
             for (JsonElement e : array) {
                 list.add(new ResourceLocation(e.getAsString()));
@@ -144,6 +146,7 @@ public class RegionManager extends ConfigurableManager {
 
         readResourceLocations(whitelistBlockUsage, config, "block_usage_whitelist");
         readResourceLocations(blacklistItemUsage, config, "item_usage_blacklist");
+        readResourceLocations(whitelistBlockBreakage, config, "block_breakage_whitelist");
         readResourceLocations(chests, config, "custom_chests");
         readResourceLocations(doors, config, "custom_doors");
 
@@ -156,14 +159,13 @@ public class RegionManager extends ConfigurableManager {
         }
     }
 
-    private boolean omitRegionSave = false;
-
     @Override
     public void save(JsonObject config) {
         config.addProperty("default-pvp", defaultPvP);
 
         writeResourceLocations(whitelistBlockUsage, config, "block_usage_whitelist");
         writeResourceLocations(blacklistItemUsage, config, "item_usage_blacklist");
+        writeResourceLocations(whitelistBlockBreakage, config, "block_breakage_whitelist");
         writeResourceLocations(chests, config, "custom_chests");
         writeResourceLocations(doors, config, "custom_doors");
 
@@ -209,32 +211,32 @@ public class RegionManager extends ConfigurableManager {
             throw new CommandException("commands.region.create.intersects", regions.size());
         }
         sender.sendQuestion(
-            "region.create",
-            Text.translation("commands.region.create.question")
-                .arg(width)
-                .arg(depth),
-            60,
-            confirmed -> {
-                if (confirmed) {
-                    List<WorldRegionManager.Region> r = getNearbyRegions(start, end, false);
-                    if (r.isEmpty()) {
-                        WorldRegionManager.Region region = createRegion(start, end, sender);
-                        if (region != null) {
-                            sender.sendMessage(
-                                Text.translation("commands.region.create.success").green()
-                                    .arg(width, Text::darkGreen)
-                                    .arg(depth, Text::darkGreen)
-                            );
+                "region.create",
+                Text.translation("commands.region.create.question")
+                        .arg(width)
+                        .arg(depth),
+                60,
+                confirmed -> {
+                    if (confirmed) {
+                        List<WorldRegionManager.Region> r = getNearbyRegions(start, end, false);
+                        if (r.isEmpty()) {
+                            WorldRegionManager.Region region = createRegion(start, end, sender);
+                            if (region != null) {
+                                sender.sendMessage(
+                                        Text.translation("commands.region.create.success").green()
+                                                .arg(width, Text::darkGreen)
+                                                .arg(depth, Text::darkGreen)
+                                );
+                            } else {
+                                sender.sendStatus(Text.translation("commands.region.create.failure").red());
+                            }
                         } else {
-                            sender.sendStatus(Text.translation("commands.region.create.failure").red());
+                            sender.sendStatus(Text.translation("commands.region.create.intersects").red()
+                                    .arg(r.size(), Text::darkRed)
+                            );
                         }
-                    } else {
-                        sender.sendStatus(Text.translation("commands.region.create.intersects").red()
-                            .arg(r.size(), Text::darkRed)
-                        );
                     }
                 }
-            }
         );
     }
 
@@ -287,6 +289,7 @@ public class RegionManager extends ConfigurableManager {
                     result.addAll(regions);
                 }
             }
+            return result;
         } else {
             WorldRegionManager m = getWorld(world.getDimension().getVanilla().getName());
             if (m != null) {
@@ -351,7 +354,7 @@ public class RegionManager extends ConfigurableManager {
     }
 
     public void syncConfiguration(Player player) {
-        player.sendPacket(new MessageConfiguration(whitelistBlockUsage, blacklistItemUsage, chests, doors));
+        player.sendPacket(new MessageConfiguration(whitelistBlockUsage, blacklistItemUsage, whitelistBlockBreakage, chests, doors));
     }
 
     @SubscribeEvent
@@ -491,6 +494,9 @@ public class RegionManager extends ConfigurableManager {
 
     @SubscribeEvent
     public void onBlockBreak(BlockEvent.BreakEvent event) {
+        if (whitelistBlockBreakage.contains(event.getState().getBlock().getRegistryName())) {
+            return;
+        }
         checkBlocks(event, event.getPlayer());
     }
 
@@ -708,7 +714,7 @@ public class RegionManager extends ConfigurableManager {
                 player.sendStatusMessage(Text.translation("chat.region.attack.hanging").red().build(), true);
                 return true;
             }
-        }  else if (target instanceof EntityMinecartEmpty || target instanceof EntityBoat) {
+        } else if (target instanceof EntityMinecartEmpty || target instanceof EntityBoat) {
             if (targetRegion != null && !targetRegion.canEditBlocks(player.getUniqueID())) {
                 player.sendStatusMessage(Text.translation("chat.region.attack.transport").red().build(), true);
                 return true;
@@ -799,7 +805,8 @@ public class RegionManager extends ConfigurableManager {
     public void onBlockLeftClick(PlayerInteractEvent.LeftClickBlock event) {
         EntityPlayer player = event.getEntityPlayer();
         Location location = new Location(event.getWorld(), event.getPos());
-        if (!location.isAir()) {
+        boolean whitelisted = whitelistBlockBreakage.contains(location.getBlock().getRegistryName());
+        if (!location.isAir() && !whitelisted) {
             Region region = getRegion(location);
             if (region != null && !region.canInteractBlocks(player.getUniqueID())) {
                 event.setUseBlock(Event.Result.DENY);
@@ -945,8 +952,6 @@ public class RegionManager extends ConfigurableManager {
         }
     }
 
-    private static final GameProfile MINECRAFT = new GameProfile(UUID.fromString("41C82C87-7AfB-4024-BA57-13D2C99CAE77"), "[Minecraft]");
-
     @SubscribeEvent
     public void onEntityDestroyBlock(LivingDestroyBlockEvent event) {
         Entity entity = event.getEntity();
@@ -986,7 +991,8 @@ public class RegionManager extends ConfigurableManager {
         EntityPlayer player = event.getEntityPlayer();
         Location location = new Location(player.world, event.getPos());
         Region region = getRegion(location);
-        if (region != null && !region.canEditBlocks(player.getUniqueID())) {
+        boolean whitelisted = whitelistBlockBreakage.contains(location.getBlock().getRegistryName());
+        if (region != null && !region.canEditBlocks(player.getUniqueID()) && !whitelisted) {
             event.setCanceled(true);
         }
     }

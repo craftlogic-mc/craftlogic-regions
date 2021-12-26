@@ -3,6 +3,7 @@ package ru.craftlogic.regions.common.command;
 import net.minecraft.block.Block;
 import net.minecraft.command.CommandException;
 import net.minecraft.item.Item;
+import net.minecraft.util.ResourceLocation;
 import ru.craftlogic.api.command.CommandBase;
 import ru.craftlogic.api.command.CommandContext;
 import ru.craftlogic.api.text.Text;
@@ -12,18 +13,19 @@ import ru.craftlogic.regions.RegionManager;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Objects;
+import java.util.Set;
 
 public class CommandRegions extends CommandBase {
     public CommandRegions() {
         super("regions", 4,
-            "whitelist block",
-            "whitelist block <id>",
-            "blacklist item",
-            "blacklist item <id>",
-            "custom door",
-            "custom door <id>",
-            "custom chest",
-            "custom chest <id>"
+                "whitelist block use|break",
+                "whitelist block use|break <id>",
+                "blacklist item",
+                "blacklist item <id>",
+                "custom door",
+                "custom door <id>",
+                "custom chest",
+                "custom chest <id>"
         );
         Collections.addAll(aliases, "rgs", "regs");
     }
@@ -38,7 +40,11 @@ public class CommandRegions extends CommandBase {
                 Block block = ctx.has("id") ? ctx.get("id").asBlock() : ctx.getPlayerLookingBlock();
                 switch (ctx.action(0)) {
                     case "whitelist": {
-                        if (regionManager.whitelistBlockUsage.add(block.getRegistryName())) {
+                        Set<ResourceLocation> list = ctx.action(2).equals("use")
+                                ? regionManager.whitelistBlockUsage
+                                : regionManager.whitelistBlockBreakage;
+
+                        if (list.add(block.getRegistryName())) {
                             syncConfiguration(ctx, regionManager);
                         } else {
                             throw new CommandException("commands.regions.already_whitelisted");

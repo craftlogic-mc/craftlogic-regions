@@ -60,6 +60,7 @@ public class ProxyClient extends ProxyCommon {
     private boolean showRegionsThroughBlocks = false;
     private Set<ResourceLocation> whitelistBlockUsage = new HashSet<>();
     private Set<ResourceLocation> blacklistItemUsage = new HashSet<>();
+    private Set<ResourceLocation> whitelistBlockBreakage = new HashSet<>();
     private Set<ResourceLocation> chests = new HashSet<>();
     private Set<ResourceLocation> doors = new HashSet<>();
 
@@ -108,6 +109,7 @@ public class ProxyClient extends ProxyCommon {
         syncTask(context, () -> {
             whitelistBlockUsage = message.getWhitelistBlockUsage();
             blacklistItemUsage = message.getBlacklistItemUsage();
+            whitelistBlockBreakage = message.getWhitelistBlockBreakage();
             doors = message.getDoors();
             chests = message.getChests();
         });
@@ -217,7 +219,8 @@ public class ProxyClient extends ProxyCommon {
     public void onBlockLeftClick(PlayerInteractEvent.LeftClickBlock event) {
         EntityPlayer player = event.getEntityPlayer();
         Location location = new Location(event.getWorld(), event.getPos());
-        if (location.isWorldRemote() && !location.isAir() && client.playerController.getCurrentGameType() != GameType.SPECTATOR) {
+        boolean whitelisted = whitelistBlockBreakage.contains(location.getBlock().getRegistryName());
+        if (location.isWorldRemote() && !location.isAir() && client.playerController.getCurrentGameType() != GameType.SPECTATOR && !whitelisted) {
             VisualRegion region = getRegion(location);
             if (region != null && !region.interactBlocks && !isRegionOwner(region, player)) {
                 event.setUseBlock(Event.Result.DENY);
@@ -230,7 +233,8 @@ public class ProxyClient extends ProxyCommon {
     public void onBlockBreakSpeedCheck(PlayerEvent.BreakSpeed event) {
         EntityPlayer player = event.getEntityPlayer();
         Location location = new Location(player.world, event.getPos());
-        if (location.isWorldRemote() && !location.isAir() && client.playerController.getCurrentGameType() != GameType.SPECTATOR) {
+        boolean whitelisted = whitelistBlockBreakage.contains(location.getBlock().getRegistryName());
+        if (location.isWorldRemote() && !location.isAir() && client.playerController.getCurrentGameType() != GameType.SPECTATOR && !whitelisted) {
             VisualRegion region = getRegion(location);
             if (region != null && !region.interactBlocks && !isRegionOwner(region, player)) {
                 event.setCanceled(true);
@@ -238,7 +242,7 @@ public class ProxyClient extends ProxyCommon {
         }
     }
 
-    private class VisualRegion implements Bounding {
+    private static class VisualRegion implements Bounding {
         private final UUID id;
         private final BlockPos start, end;
         private final GameProfile owner;

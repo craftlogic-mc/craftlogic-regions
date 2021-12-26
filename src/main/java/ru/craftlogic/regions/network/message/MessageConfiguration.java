@@ -16,6 +16,7 @@ import java.util.function.Function;
 public class MessageConfiguration extends AdvancedMessage {
     private Set<ResourceLocation> whitelistBlockUsage;
     private Set<ResourceLocation> blacklistItemUsage;
+    private Set<ResourceLocation> whitelistBlockBreakage;
     private Set<ResourceLocation> chests;
     private Set<ResourceLocation> doors;
 
@@ -23,12 +24,14 @@ public class MessageConfiguration extends AdvancedMessage {
 
     public MessageConfiguration(Set<ResourceLocation> whitelistBlockUsage,
                                 Set<ResourceLocation> blacklistItemUsage,
+                                Set<ResourceLocation> whitelistBlockBreakage,
                                 Set<ResourceLocation> chests,
                                 Set<ResourceLocation> doors) {
 
 
         this.whitelistBlockUsage = whitelistBlockUsage;
         this.blacklistItemUsage = blacklistItemUsage;
+        this.whitelistBlockBreakage = whitelistBlockBreakage;
         this.chests = chests;
         this.doors = doors;
     }
@@ -42,6 +45,7 @@ public class MessageConfiguration extends AdvancedMessage {
     protected void read(AdvancedBuffer buf) throws IOException {
         whitelistBlockUsage = readSet(buf, PacketBuffer::readResourceLocation);
         blacklistItemUsage = readSet(buf, PacketBuffer::readResourceLocation);
+        whitelistBlockBreakage = readSet(buf, PacketBuffer::readResourceLocation);
         chests = readSet(buf, PacketBuffer::readResourceLocation);
         doors = readSet(buf, PacketBuffer::readResourceLocation);
     }
@@ -59,6 +63,7 @@ public class MessageConfiguration extends AdvancedMessage {
     protected void write(AdvancedBuffer buf) throws IOException {
         writeSet(buf, whitelistBlockUsage, PacketBuffer::writeResourceLocation);
         writeSet(buf, blacklistItemUsage, PacketBuffer::writeResourceLocation);
+        writeSet(buf, whitelistBlockBreakage, PacketBuffer::writeResourceLocation);
         writeSet(buf, chests, PacketBuffer::writeResourceLocation);
         writeSet(buf, doors, PacketBuffer::writeResourceLocation);
     }
@@ -76,6 +81,10 @@ public class MessageConfiguration extends AdvancedMessage {
 
     public Set<ResourceLocation> getBlacklistItemUsage() {
         return blacklistItemUsage;
+    }
+
+    public Set<ResourceLocation> getWhitelistBlockBreakage() {
+        return whitelistBlockBreakage;
     }
 
     public Set<ResourceLocation> getChests() {
