@@ -27,6 +27,7 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.event.CommandEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.*;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
@@ -57,6 +58,7 @@ import ru.craftlogic.api.server.WorldManager;
 import ru.craftlogic.api.text.Text;
 import ru.craftlogic.api.util.ConfigurableManager;
 import ru.craftlogic.api.world.*;
+import ru.craftlogic.common.command.CommandEnderchest;
 import ru.craftlogic.common.command.CommandManager;
 import ru.craftlogic.common.entity.projectile.EntityThrownItem;
 import ru.craftlogic.regions.WorldRegionManager.Region;
@@ -709,6 +711,22 @@ public class RegionManager extends ConfigurableManager {
     @SubscribeEvent
     public void onTimedTeleport(PlayerTimedTeleportEvent event) {
         checkTeleport(event, event.player);
+    }
+
+    @SubscribeEvent
+    public void onSendRestrictedCommand(CommandEvent event) {
+        if (event.getSender() instanceof EntityPlayer && event.getCommand() instanceof CommandEnderchest) {
+            EntityPlayer player = (EntityPlayer) event.getSender();
+            Player p = Player.from((EntityPlayerMP) player);
+            Region region = getRegion(new Location(player));
+            if (region != null && region.restrictCommands && !p.hasPermission("region.commands")) {
+                event.setCanceled(true);
+                p.sendMessage(Text.translation("chat.region.no-command").red());
+                player.playSound(CraftSounds.BAN, 0.8F, 1F);
+            }
+
+
+        }
     }
 
     private void checkTeleport(net.minecraftforge.event.entity.player.PlayerEvent event, Player player) {

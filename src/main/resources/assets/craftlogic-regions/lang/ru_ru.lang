@@ -23,6 +23,7 @@ chat.region.interact.potions=Врзрыв зелья запрещен!
 chat.region.interact.projectiles=Удар снаряда запрещен!
 chat.region.interact.explosions=Взрыв запрещен!
 chat.region.no-teleport=В этом регионе запрещена телепортация
+chat.region.no-command=В этом регионе ограничены команды
 
 item.wand.name=Жезл региона
 item.wand.first_point=Первая точка: %s, %s, %s

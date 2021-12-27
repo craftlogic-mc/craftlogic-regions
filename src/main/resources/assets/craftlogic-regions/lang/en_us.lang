@@ -23,6 +23,7 @@ chat.region.interact.potions=Potion blow denied!
 chat.region.interact.projectiles=Projectile impact denied!
 chat.region.interact.explosions=Explosion denied!
 chat.region.no-teleport=This region restricts teleportation
+chat.region.no-command=This region restricts commands
 
 item.wand.name=Region Wand
 item.wand.first_point=First point: %s, %s, %s
