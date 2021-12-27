@@ -22,6 +22,7 @@ chat.region.interact.transport=This transport is protected from interactions!
 chat.region.interact.potions=Potion blow denied!
 chat.region.interact.projectiles=Projectile impact denied!
 chat.region.interact.explosions=Explosion denied!
+chat.region.no-teleport=This region restricts teleportation
 
 item.wand.name=Region Wand
 item.wand.first_point=First point: %s, %s, %s
@@ -56,6 +57,8 @@ commands.region.invite.already=%s is already invited to your region!
 commands.region.invite.successful=You have successfully invited %s to your region!
 commands.region.pvp.on=You have successfully enabled PvP in this region!
 commands.region.pvp.off=You have successfully disabled PvP in this region!
+commands.region.commands.on=You have successfully restricted commands in this region!
+commands.region.commands.off=You have successfully unrestricted commands in this region!
 commands.region.explosions.on=You have successfully enabled explosions in this region!
 commands.region.explosions.off=You have successfully disabled explosions in this region!
 commands.region.hostiles.on=You have successfully enabled hostiles protection in this region!

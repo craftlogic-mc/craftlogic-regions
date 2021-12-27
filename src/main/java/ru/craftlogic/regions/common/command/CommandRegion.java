@@ -18,7 +18,7 @@ import java.util.*;
 public class CommandRegion extends CommandBase {
     public CommandRegion() {
         super("region", 1,
-            "pvp|hostiles|mob_attacks|explosions|projectiles|mob_spawn",
+            "pvp|hostiles|mob_attacks|explosions|projectiles|mob_spawn|commands",
             "expel|transfer <target:OfflinePlayer>",
             "list <target:OfflinePlayer>",
             "list <target:OfflinePlayer> <world:World>",
@@ -249,6 +249,10 @@ public class CommandRegion extends CommandBase {
                 }
                 case "pvp": {
                     booleanFlag(ctx, regionManager, "pvp", Region::isPvP, Region::setPvP, true);
+                    break;
+                }
+                case "commands": {
+                    booleanFlag(ctx, regionManager, "commands", Region::isRestrictCommands, Region::setRestrictCommands, true);
                     break;
                 }
                 case "hostiles": {

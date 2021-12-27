@@ -62,7 +62,7 @@ public class WorldRegionManager extends ConfigurableManager {
     public Region createRegion(Location start, Location end, UUID owner) {
         UUID id;
         while (regions.containsKey(id = UUID.randomUUID())) {}
-        Region region = new Region(id, owner, start, end, defaultPvP, false, false, false, false, true, new HashMap<>());
+        Region region = new Region(id, owner, start, end, defaultPvP, false, false, false, false, false, true, new HashMap<>());
         regions.put(id, region);
         setDirty(true);
         return region;
@@ -113,7 +113,7 @@ public class WorldRegionManager extends ConfigurableManager {
         UUID owner;
         final Map<UUID, Set<RegionAbility>> members;
         final Location start, end;
-        boolean explosions, pvp, projectiles, protectingHostiles, preventingMobAttacks, mobSpawn;
+        boolean explosions, pvp, restrictCommands, projectiles, protectingHostiles, preventingMobAttacks, mobSpawn;
 
         public Region(Dimension dimension, UUID id, JsonObject root) {
             this(id,
@@ -121,6 +121,7 @@ public class WorldRegionManager extends ConfigurableManager {
                 Location.deserialize(dimension.getVanilla().getId(), root.getAsJsonObject("start")),
                 Location.deserialize(dimension.getVanilla().getId(), root.getAsJsonObject("end")),
                 JsonUtils.getBoolean(root, "pvp", false),
+                JsonUtils.getBoolean(root, "restrictCommands", false),
                 JsonUtils.getBoolean(root, "explosions", false),
                 JsonUtils.getBoolean(root, "projectiles", false),
                 JsonUtils.getBoolean(root, "protectingHostiles", false),
@@ -130,12 +131,13 @@ public class WorldRegionManager extends ConfigurableManager {
             );
         }
 
-        public Region(UUID id, UUID owner, Location start, Location end, boolean pvp, boolean explosions, boolean projectiles, boolean protectingHostiles, boolean preventingMobAttacks, boolean mobSpawn, Map<UUID, Set<RegionAbility>> members) {
+        public Region(UUID id, UUID owner, Location start, Location end, boolean pvp, boolean restrictCommands, boolean explosions, boolean projectiles, boolean protectingHostiles, boolean preventingMobAttacks, boolean mobSpawn, Map<UUID, Set<RegionAbility>> members) {
             this.id = id;
             this.owner = owner;
             this.start = start;
             this.end = end;
             this.pvp = pvp;
+            this.restrictCommands = restrictCommands;
             this.projectiles = projectiles;
             this.protectingHostiles = protectingHostiles;
             this.preventingMobAttacks = preventingMobAttacks;
@@ -363,6 +365,14 @@ public class WorldRegionManager extends ConfigurableManager {
             return explosions;
         }
 
+        public boolean isRestrictCommands() {
+            return restrictCommands;
+        }
+
+        public void setRestrictCommands(boolean restrictCommands) {
+            this.restrictCommands = restrictCommands;
+        }
+
         public void setExplosions(boolean explosions) {
             this.explosions = explosions;
         }
@@ -374,6 +384,9 @@ public class WorldRegionManager extends ConfigurableManager {
             result.add("end", end.serialize());
             if (pvp) {
                 result.addProperty("pvp", true);
+            }
+            if (restrictCommands) {
+                result.addProperty("restrictCommands", true);
             }
             if (explosions) {
                 result.addProperty("explosions", true);

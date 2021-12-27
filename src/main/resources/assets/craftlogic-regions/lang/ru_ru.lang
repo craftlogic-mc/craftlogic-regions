@@ -22,6 +22,7 @@ chat.region.interact.transport=Транспорт защищен от взаим
 chat.region.interact.potions=Врзрыв зелья запрещен!
 chat.region.interact.projectiles=Удар снаряда запрещен!
 chat.region.interact.explosions=Взрыв запрещен!
+chat.region.no-teleport=В этом регионе запрещена телепортация
 
 item.wand.name=Жезл региона
 item.wand.first_point=Первая точка: %s, %s, %s
@@ -56,6 +57,8 @@ commands.region.invite.already=%s уже приглашён в ваш регио
 commands.region.invite.successful=Вы успешно пригласили игрока %s в свой регион!
 commands.region.pvp.on=Вы успешно включили PvP в этом регионе!
 commands.region.pvp.off=Вы успешно выключили PvP в этом регионе!
+commands.region.commands.on=Вы успешно ограничели команды в этом регионе!
+commands.region.commands.off=Вы успешно разрешили команды в этом регионе!
 commands.region.explosions.on=Вы успешно включили взрывы в этом регионе!
 commands.region.explosions.off=Вы успешно выключили взрывы в этом регионе!
 commands.region.hostiles.on=Вы успешно включили защиту враждебных существ в этом регионе!

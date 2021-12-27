@@ -36,20 +36,19 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.ExplosionEvent;
 import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.fml.common.Optional;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import ru.craftlogic.api.CraftAPI;
 import ru.craftlogic.api.CraftSounds;
 import ru.craftlogic.api.event.block.DispenserShootEvent;
 import ru.craftlogic.api.event.block.FarmlandTrampleEvent;
 import ru.craftlogic.api.event.block.FluidFlowEvent;
 import ru.craftlogic.api.event.block.PistonCheckCanMoveEvent;
-import ru.craftlogic.api.event.player.PlayerCheckCanEditEvent;
-import ru.craftlogic.api.event.player.PlayerHookEntityEvent;
-import ru.craftlogic.api.event.player.PlayerPlaceBoatEvent;
-import ru.craftlogic.api.event.player.PlayerTeleportHomeEvent;
+import ru.craftlogic.api.event.player.*;
 import ru.craftlogic.api.math.Bounding;
 import ru.craftlogic.api.math.BoxBounding;
 import ru.craftlogic.api.server.PlayerManager;
@@ -67,6 +66,7 @@ import ru.craftlogic.regions.common.command.CommandWand;
 import ru.craftlogic.regions.network.message.MessageConfiguration;
 import ru.craftlogic.regions.network.message.MessageOverride;
 import ru.craftlogic.regions.network.message.MessageRegion;
+import ru.craftlogic.warps.event.PlayerWarpEvent;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -678,6 +678,45 @@ public class RegionManager extends ConfigurableManager {
                     ((EntityPlayer) thrower).sendStatusMessage(Text.translation("chat.region.interact.projectiles").red().build(), true);
                 }
             }
+        }
+    }
+
+
+    @SubscribeEvent
+    @Optional.Method(modid = CraftAPI.MOD_ID + "-warps")
+    public void onWarp(PlayerWarpEvent event) {
+        checkTeleport(event, event.player);
+    }
+
+    @SubscribeEvent
+    public void onHomeTeleport(PlayerTeleportHomeEvent event) {
+        checkTeleport(event, event.player);
+    }
+
+    @SubscribeEvent
+    public void onTeleportRequest(PlayerTeleportRequestEvent event) {
+        checkTeleport(event, event.player);
+    }
+
+    @SubscribeEvent
+    public void onTeleportReply(PlayerTeleportReplyEvent event) {
+        if (event.targetAccepted) {
+            checkTeleport(event, event.player);
+            checkTeleport(event, event.target);
+        }
+    }
+
+    @SubscribeEvent
+    public void onTimedTeleport(PlayerTimedTeleportEvent event) {
+        checkTeleport(event, event.player);
+    }
+
+    private void checkTeleport(net.minecraftforge.event.entity.player.PlayerEvent event, Player player) {
+        Region region = getRegion(new Location(player.getEntity()));
+        if (region != null && region.restrictCommands && !player.hasPermission("region.commands")) {
+            event.setCanceled(true);
+            player.sendMessage(Text.translation("chat.region.no-teleport").red());
+            player.playSound(CraftSounds.BAN, 0.8F, 1F);
         }
     }
 
