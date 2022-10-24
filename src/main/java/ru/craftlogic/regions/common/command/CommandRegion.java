@@ -20,6 +20,7 @@ public class CommandRegion extends CommandBase {
         super("region", 1,
             "pvp|hostiles|mob_attacks|explosions|projectiles|mob_spawn",
             "expel|transfer <target:OfflinePlayer>",
+            "list",
             "list <target:OfflinePlayer>",
             "list <target:OfflinePlayer> <world:World>",
             "invite <target:OfflinePlayer>",
@@ -28,7 +29,6 @@ public class CommandRegion extends CommandBase {
             "delete|create|claim|info|override",
             "create|claim <name>",
             "info <region:Region>",
-            "<region:Region>",
             ""
         );
         Collections.addAll(aliases, "rg", "reg");
@@ -209,15 +209,16 @@ public class CommandRegion extends CommandBase {
                     break;
                 }
                 case "list": {
+                    CommandSender sender = ctx.sender();
                     World world = ctx.has("world")
                         ? ctx.get("world").asWorld()
-                        : ctx.sender() instanceof Player
+                        : sender instanceof Player
                             ? ctx.senderAsPlayer().getWorld()
                             : error("commands.region.list.world");
-                    OfflinePlayer target = ctx.get("target").asOfflinePlayer();
+                    OfflinePlayer target = ctx.senderAsOfflinePlayerOrArg("target");
                     List<Region> regions = regionManager.getPlayerRegions(target, world);
                     if (regions.isEmpty()) {
-                        ctx.sendMessage(Text.translation("commands.region.list.none").red());
+                        ctx.sendMessage(Text.translation("commands.region.list.none" + (target == sender ? ".you" : "")).red());
                     } else {
                         Text<?, ?> message = Text.translation("commands.region.list.header").yellow()
                             .arg(target.getName(), Text::gold)
@@ -229,9 +230,30 @@ public class CommandRegion extends CommandBase {
                             Text<?, ?> line = Text.string(String.valueOf(i++))
                                 .appendText(". [")
                                 .appendTranslate("commands.region.list.id", t -> t.green().suggestCommand(id))
-                                .appendText("] [")
-                                .appendTranslate("commands.region.list.teleport", t -> t.green().runCommand("/region teleport " + id))
-                                .appendText("]\n");
+                                .appendText("] ");
+                            if (sender.hasPermission("commands.region.teleport") || sender.hasPermission("commands.region.admin.teleport")) {
+                                line.appendText("[")
+                                    .appendTranslate("commands.region.list.teleport", t -> t.green().runCommand("/region teleport " + id))
+                                    .appendText("] ");
+                            }
+
+                            line.appendTranslate("commands.region.list.area", t -> t
+                                    .arg((int)region.getWidth(), Text::gold)
+                                    .arg((int)region.getDepth(), Text::gold));
+                            if (sender instanceof Player) {
+                                Player player = ctx.senderAsPlayer();
+                                Location l = player.getLocation();
+                                final int distance;
+                                if (region.isOwning(l)) {
+                                    distance = 0;
+                                } else {
+                                    distance = (int)region.distance2D(l);
+                                }
+                                line.appendText(" ")
+                                    .appendTranslate("commands.region.list.distance", t -> t
+                                    .arg(distance, Text::gold));
+                            }
+                            line.appendText("\n");
                             message.append(line);
                         }
                         ctx.sendMessage(message);

@@ -29,6 +29,7 @@ item.wand.tooltip=Right click to set a point
 item.wand.tooltip.columns=Do not build block columns!
 item.wand.other_dimension=Cannot create region between dimensions
 
+commands.region.usage=/rg delete|create|claim|info|override OR /rg pvp|hostiles|mob_attacks|explosions|projectiles|mob_spawn
 commands.region.not_owning=You do not own this region!
 commands.region.delete.question=Do you really want to delete this region?
 commands.region.delete.success=Successfully deleted current region. Beware of griefers!
@@ -75,10 +76,13 @@ commands.region.transfer.max_area=Your region area exceeds receiver's limit: %s 
 commands.region.override.enabled=Priority mode enabled
 commands.region.override.disabled=Priority mode disabled
 commands.region.list.none=That player has no regions in the specified world
+commands.region.list.none.you=You have no regions in the specified world
 commands.region.list.world=Please specify a world to search for regions in
 commands.region.list.header=%s's regions in world %s:
 commands.region.list.id=ID
 commands.region.list.teleport=Teleport
+commands.region.list.area=with area of %sx%s
+commands.region.list.distance=%s blocks away.
 
 commands.regions.no_block=No block in sight
 commands.regions.no_item=No item in main hand

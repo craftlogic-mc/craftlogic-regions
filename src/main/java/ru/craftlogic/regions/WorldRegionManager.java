@@ -172,12 +172,24 @@ public class WorldRegionManager extends ConfigurableManager {
             return end;
         }
 
+        public double getWidth() {
+            return getEndX() - getStartX();
+        }
+
+        public double getHeight() {
+            return getEndY() - getStartY();
+        }
+
+        public double getDepth() {
+            return getEndZ() - getStartZ();
+        }
+
         public double getArea() {
-            return (getEndX() - getStartX()) * (getEndZ() - getStartZ());
+            return getWidth() * getDepth();
         }
 
         public double getVolume() {
-            return getArea() * (getEndY() - getStartY());
+            return getArea() * getHeight();
         }
 
         @Override
@@ -208,6 +220,18 @@ public class WorldRegionManager extends ConfigurableManager {
         @Override
         public double getEndZ() {
             return Math.max(start.getBlockZ(), end.getBlockZ());
+        }
+
+        public double distance2DSq(Location location) {
+            double x = location.getX();
+            double z = location.getZ();
+            double dx = Math.min(Math.abs(x - getStartX()), Math.abs(x - getEndX()));
+            double dz = Math.min(Math.abs(z - getStartZ()), Math.abs(z - getEndZ()));
+            return dx * dx + dz * dz;
+        }
+
+        public double distance2D(Location location) {
+            return Math.sqrt(distance2DSq(location));
         }
 
         public boolean isMember(OfflinePlayer target) {

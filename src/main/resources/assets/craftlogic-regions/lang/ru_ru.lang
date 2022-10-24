@@ -75,10 +75,13 @@ commands.region.transfer.max_area=Площадь вашего региона п�
 commands.region.override.enabled=Режим приоритета включен
 commands.region.override.disabled=Режим приоритета отключен
 commands.region.list.none=У данного игрока нет регионов в указанном мире
+commands.region.list.none.you=У вас нет регионов в указанном мире
 commands.region.list.world=Укажите мир, в котором необходимо искать регионы
 commands.region.list.header=Регионы %s в мире %s:
 commands.region.list.id=ID
 commands.region.list.teleport=Телепорт
+commands.region.list.area=площадью %sx%s
+commands.region.list.distance=в %s блоках от вас.
 
 commands.regions.no_block=Нет блока в поле зрения
 commands.regions.no_item=Нет предмета в ведущей руке
