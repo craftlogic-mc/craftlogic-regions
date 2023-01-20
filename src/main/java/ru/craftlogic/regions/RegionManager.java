@@ -809,6 +809,16 @@ public class RegionManager extends ConfigurableManager {
     }
 
     @SubscribeEvent
+    public void onFalling(LivingFallEvent event) {
+        EntityLivingBase entity = event.getEntityLiving();
+        Location location = new Location(entity.getEntityWorld(), new BlockPos(entity));
+        Region region = getRegion(location);
+        if (region != null && !region.isFallDamage()) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
     public void onBlockRightClick(PlayerInteractEvent.RightClickBlock event) {
         EntityPlayer player = event.getEntityPlayer();
         Location location = new Location(event.getWorld(), event.getPos());

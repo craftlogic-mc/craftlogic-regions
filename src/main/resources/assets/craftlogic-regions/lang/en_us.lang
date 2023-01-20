@@ -31,7 +31,7 @@ item.wand.tooltip=Right click to set a point
 item.wand.tooltip.columns=Do not build block columns!
 item.wand.other_dimension=Cannot create region between dimensions
 
-commands.region.usage=/rg delete|create|claim|info|override OR /rg pvp|hostiles|mob_attacks|explosions|projectiles|mob_spawn
+commands.region.usage=/rg delete|create|claim|info|override OR /rg pvp|hostiles|mob_attacks|explosions|projectiles|mob_spawn|fall_damage
 commands.region.not_owning=You do not own this region!
 commands.region.delete.question=Do you really want to delete this region?
 commands.region.delete.success=Successfully deleted current region. Beware of griefers!
@@ -71,6 +71,8 @@ commands.region.projectiles.on=You have successfully enabled projectiles in this
 commands.region.projectiles.off=You have successfully disabled projectiles in this region!
 commands.region.mob_spawn.on=You have successfully enabled mob spawning in this region!
 commands.region.mob_spawn.off=You have successfully disabled mob spawning in this region!
+commands.region.fall_damage.on=You have successfully enabled fall damage in this region!
+commands.region.fall_damage.off=You have successfully disabled fall damage in this region!
 commands.region.transfer.question=Do you really want to transfer ownership of this region to %s?
 commands.region.transfer.successful=You've successfully transferred ownership of this region to %s
 commands.region.transfer.received=%s transferred ownership of their %s
