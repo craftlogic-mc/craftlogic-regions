@@ -27,6 +27,7 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.CommandEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.*;
@@ -65,6 +66,7 @@ import ru.craftlogic.regions.WorldRegionManager.Region;
 import ru.craftlogic.regions.common.command.CommandRegion;
 import ru.craftlogic.regions.common.command.CommandRegions;
 import ru.craftlogic.regions.common.command.CommandWand;
+import ru.craftlogic.regions.common.event.RegionPvpStatusEvent;
 import ru.craftlogic.regions.network.message.MessageConfiguration;
 import ru.craftlogic.regions.network.message.MessageOverride;
 import ru.craftlogic.regions.network.message.MessageRegion;
@@ -748,8 +750,14 @@ public class RegionManager extends ConfigurableManager {
         if (target instanceof EntityPlayer) {
             Region fromRegion = getRegion(new Location(player));
             if (fromRegion != null && !fromRegion.isPvP() || targetRegion != null && !targetRegion.isPvP()) {
-                player.sendStatusMessage(Text.translation("chat.region.attack.players").red().build(), true);
-                return true;
+                RegionPvpStatusEvent event = new RegionPvpStatusEvent(fromRegion, targetRegion, player, (EntityPlayer) target);
+                MinecraftForge.EVENT_BUS.post(event);
+                if (event.getResult() != Event.Result.ALLOW) {
+                    player.sendStatusMessage(Text.translation("chat.region.attack.players").red().build(), true);
+                    return true;
+                } else {
+                    return false;
+                }
             }
         } else if (target instanceof INpc) {
             if (targetRegion != null && !targetRegion.canAttackNeutral(player.getUniqueID())) {
