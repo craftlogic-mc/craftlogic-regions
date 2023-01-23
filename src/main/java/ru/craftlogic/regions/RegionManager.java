@@ -1,5 +1,6 @@
 package ru.craftlogic.regions;
 
+import com.google.common.base.MoreObjects;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -823,6 +824,18 @@ public class RegionManager extends ConfigurableManager {
         Region region = getRegion(location);
         if (region != null && !region.isFallDamage()) {
             event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public void onJoin(PlayerJoinedMessageEvent event) {
+        Player player = Player.from(event.getPlayer());
+        Location location = player.getLocation();
+        Region region = getRegion(location);
+        if (region != null && region.isTeleportSpawn()) {
+            Location bedLocation = player.getBedLocation();
+            Location spawnLocation = player.getWorld().getSpawnLocation();
+            player.teleport(MoreObjects.firstNonNull(bedLocation, spawnLocation));
         }
     }
 

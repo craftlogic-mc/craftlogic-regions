@@ -62,7 +62,7 @@ public class WorldRegionManager extends ConfigurableManager {
     public Region createRegion(Location start, Location end, UUID owner) {
         UUID id;
         while (regions.containsKey(id = UUID.randomUUID())) {}
-        Region region = new Region(id, owner, start, end, defaultPvP, false, false, false, false, false, true, true, new HashMap<>());
+        Region region = new Region(id, owner, start, end, defaultPvP, false, false, false, false, false, true, true, false, new HashMap<>());
         regions.put(id, region);
         setDirty(true);
         return region;
@@ -113,7 +113,7 @@ public class WorldRegionManager extends ConfigurableManager {
         UUID owner;
         final Map<UUID, Set<RegionAbility>> members;
         final Location start, end;
-        boolean explosions, pvp, restrictCommands, projectiles, protectingHostiles, preventingMobAttacks, mobSpawn, fallDamage;
+        boolean explosions, pvp, restrictCommands, projectiles, protectingHostiles, preventingMobAttacks, mobSpawn, fallDamage, teleportSpawn;
 
         public Region(Dimension dimension, UUID id, JsonObject root) {
             this(id,
@@ -128,11 +128,12 @@ public class WorldRegionManager extends ConfigurableManager {
                 JsonUtils.getBoolean(root, "preventingMobAttacks", false),
                 JsonUtils.getBoolean(root, "mobSpawn", true),
                 JsonUtils.getBoolean(root, "fallDamage", true),
+                JsonUtils.getBoolean(root, "teleportSpawn", false),
                 root.has("members") ? parseMembers(JsonUtils.getJsonObject(root, "members")) : new HashMap<>()
             );
         }
 
-        public Region(UUID id, UUID owner, Location start, Location end, boolean pvp, boolean restrictCommands, boolean explosions, boolean projectiles, boolean protectingHostiles, boolean preventingMobAttacks, boolean mobSpawn, boolean fallDamage, Map<UUID, Set<RegionAbility>> members) {
+        public Region(UUID id, UUID owner, Location start, Location end, boolean pvp, boolean restrictCommands, boolean explosions, boolean projectiles, boolean protectingHostiles, boolean preventingMobAttacks, boolean mobSpawn, boolean fallDamage, boolean teleportSpawn, Map<UUID, Set<RegionAbility>> members) {
             this.id = id;
             this.owner = owner;
             this.start = start;
@@ -145,6 +146,7 @@ public class WorldRegionManager extends ConfigurableManager {
             this.explosions = explosions;
             this.mobSpawn = mobSpawn;
             this.fallDamage = fallDamage;
+            this.teleportSpawn = teleportSpawn;
             this.members = members;
         }
 
@@ -270,6 +272,10 @@ public class WorldRegionManager extends ConfigurableManager {
             return fallDamage;
         }
 
+        public boolean isTeleportSpawn() {
+            return teleportSpawn;
+        }
+
         public boolean canEditBlocks(OfflinePlayer target) {
             return canEditBlocks(target.getId());
         }
@@ -360,6 +366,9 @@ public class WorldRegionManager extends ConfigurableManager {
 
         public void setFallDamage(boolean fallDamage) {
             this.fallDamage = fallDamage;
+        }
+        public void setTeleportSpawn(boolean teleportSpawn) {
+            this.teleportSpawn = teleportSpawn;
         }
 
         public boolean isPvP() {
