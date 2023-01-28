@@ -42,6 +42,7 @@ import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.Optional;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -348,7 +349,7 @@ public class RegionManager extends ConfigurableManager {
     }
 
     @SubscribeEvent
-    public void onPlayerJoin(net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent event) {
+    public void onPlayerJoin(PlayerLoggedInEvent event) {
         EntityPlayer entity = event.player;
         if (!entity.world.isRemote && entity instanceof EntityPlayerMP) {
             Player player = Player.from((EntityPlayerMP) entity);
@@ -828,14 +829,15 @@ public class RegionManager extends ConfigurableManager {
     }
 
     @SubscribeEvent
-    public void onJoin(PlayerJoinedMessageEvent event) {
-        Player player = Player.from(event.getPlayer());
-        Location location = player.getLocation();
+    public void onJoin(PlayerLoggedInEvent event) {
+        EntityPlayer player = event.player;
+        Location location = new Location(player.getEntityWorld(), new BlockPos(player));
         Region region = getRegion(location);
         if (region != null && region.isTeleportSpawn()) {
-            Location bedLocation = player.getBedLocation();
-            Location spawnLocation = player.getWorld().getSpawnLocation();
-            player.teleport(MoreObjects.firstNonNull(bedLocation, spawnLocation));
+            Player p = Player.from((EntityPlayerMP) player);
+            Location bedLocation = p.getBedLocation();
+            Location spawnLocation = p.getWorld().getSpawnLocation();
+            p.teleport(MoreObjects.firstNonNull(bedLocation, spawnLocation));
         }
     }
 

@@ -449,6 +449,9 @@ public class WorldRegionManager extends ConfigurableManager {
             if (!fallDamage) {
                 result.addProperty("fallDamage", false);
             }
+            if (teleportSpawn) {
+                result.addProperty("teleportSpawn", true);
+            }
             if (!this.members.isEmpty()) {
                 JsonObject members = new JsonObject();
                 for (Map.Entry<UUID, Set<RegionAbility>> entry : this.members.entrySet()) {
