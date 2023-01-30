@@ -1,6 +1,9 @@
 package ru.craftlogic.regions.common.command;
 
 import net.minecraft.command.CommandException;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextFormatting;
 import ru.craftlogic.api.command.CommandBase;
 import ru.craftlogic.api.command.CommandContext;
@@ -18,7 +21,7 @@ import java.util.*;
 public class CommandRegion extends CommandBase {
     public CommandRegion() {
         super("region", 1,
-            "pvp|hostiles|mob_attacks|explosions|projectiles|mob_spawn|fall_damage|teleport_spawn|commands",
+            "pvp|hostiles|mob_attacks|explosions|projectiles|mob_spawn|fall_damage|teleport_spawn|commands|rightClickItemUsage",
             "expel|transfer <target:OfflinePlayer>",
             "list",
             "list <target:OfflinePlayer>",
@@ -257,6 +260,19 @@ public class CommandRegion extends CommandBase {
                             message.append(line);
                         }
                         ctx.sendMessage(message);
+                    }
+                    break;
+                }
+                case "rightClickItemUsage": {
+                    Player sender = ctx.senderAsPlayer();
+                    if (ctx.checkPermission(true, "commands.region.admin.rightClickItemUsage", 2)) {
+                        ItemStack item = sender.getHeldItem(EnumHand.MAIN_HAND);
+                        if (item.isEmpty()) {
+                            break;
+                        }
+                        ResourceLocation name = item.getItem().getRegistryName();
+                        Region region = regionManager.getRegion(sender.getLocation());
+                        region.addRightClickItemUsage(name);
                     }
                     break;
                 }

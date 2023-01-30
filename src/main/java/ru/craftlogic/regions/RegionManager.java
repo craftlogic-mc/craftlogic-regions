@@ -19,12 +19,14 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.projectile.EntityArrow;
 import net.minecraft.entity.projectile.EntityPotion;
 import net.minecraft.entity.projectile.EntityThrowable;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.play.server.SPacketBlockChange;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.WorldServer;
@@ -838,6 +840,22 @@ public class RegionManager extends ConfigurableManager {
             Location bedLocation = p.getBedLocation();
             Location spawnLocation = p.getWorld().getSpawnLocation();
             p.teleport(MoreObjects.firstNonNull(bedLocation, spawnLocation));
+        }
+    }
+
+    @SubscribeEvent
+    public void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
+        ResourceLocation name = event.getItemStack().getItem().getRegistryName();
+        Location location = new Location(event.getWorld(), event.getPos());
+        Region region = getRegion(location);
+        if (region == null) {
+            return;
+        }
+        Set<ResourceLocation> itemUsage = region.getRightClickItemUsage();
+        if (itemUsage.contains(name)) {
+            event.setCancellationResult(EnumActionResult.FAIL);
+            event.setResult(Event.Result.DENY);
+            event.setCanceled(true);
         }
     }
 

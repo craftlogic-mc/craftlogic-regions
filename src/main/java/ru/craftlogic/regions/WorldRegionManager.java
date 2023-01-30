@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.util.JsonUtils;
+import net.minecraft.util.ResourceLocation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import ru.craftlogic.api.math.Bounding;
@@ -62,7 +63,7 @@ public class WorldRegionManager extends ConfigurableManager {
     public Region createRegion(Location start, Location end, UUID owner) {
         UUID id;
         while (regions.containsKey(id = UUID.randomUUID())) {}
-        Region region = new Region(id, owner, start, end, defaultPvP, false, false, false, false, false, true, true, false, new HashMap<>());
+        Region region = new Region(id, owner, start, end, defaultPvP, false, false, false, false, false, true, true, false, new HashSet<>(), new HashMap<>());
         regions.put(id, region);
         setDirty(true);
         return region;
@@ -108,10 +109,22 @@ public class WorldRegionManager extends ConfigurableManager {
         return result;
     }
 
+
+    private static Set<ResourceLocation> parseItems(JsonArray items) {
+        Set<ResourceLocation> result = new HashSet<>();
+        for (JsonElement item : items) {
+            String name = item.getAsString();
+            ResourceLocation resourceLocation = new ResourceLocation(name);
+            result.add(resourceLocation);
+        }
+        return result;
+    }
+
     public class Region implements Bounding {
         final UUID id;
         UUID owner;
         final Map<UUID, Set<RegionAbility>> members;
+        public Set<ResourceLocation> rightClickItemUsage;
         final Location start, end;
         boolean explosions, pvp, restrictCommands, projectiles, protectingHostiles, preventingMobAttacks, mobSpawn, fallDamage, teleportSpawn;
 
@@ -129,11 +142,12 @@ public class WorldRegionManager extends ConfigurableManager {
                 JsonUtils.getBoolean(root, "mobSpawn", true),
                 JsonUtils.getBoolean(root, "fallDamage", true),
                 JsonUtils.getBoolean(root, "teleportSpawn", false),
+                root.has("rightClickItemUsage") ? parseItems(JsonUtils.getJsonArray(root, "rightClickItemUsage")) : new HashSet<>(),
                 root.has("members") ? parseMembers(JsonUtils.getJsonObject(root, "members")) : new HashMap<>()
             );
         }
 
-        public Region(UUID id, UUID owner, Location start, Location end, boolean pvp, boolean restrictCommands, boolean explosions, boolean projectiles, boolean protectingHostiles, boolean preventingMobAttacks, boolean mobSpawn, boolean fallDamage, boolean teleportSpawn, Map<UUID, Set<RegionAbility>> members) {
+        public Region(UUID id, UUID owner, Location start, Location end, boolean pvp, boolean restrictCommands, boolean explosions, boolean projectiles, boolean protectingHostiles, boolean preventingMobAttacks, boolean mobSpawn, boolean fallDamage, boolean teleportSpawn, Set<ResourceLocation> rightClickItemUsage, Map<UUID, Set<RegionAbility>> members) {
             this.id = id;
             this.owner = owner;
             this.start = start;
@@ -147,6 +161,7 @@ public class WorldRegionManager extends ConfigurableManager {
             this.mobSpawn = mobSpawn;
             this.fallDamage = fallDamage;
             this.teleportSpawn = teleportSpawn;
+            this.rightClickItemUsage = rightClickItemUsage;
             this.members = members;
         }
 
@@ -168,6 +183,14 @@ public class WorldRegionManager extends ConfigurableManager {
 
         public Set<UUID> getMembers() {
             return members.keySet();
+        }
+
+        public Set<ResourceLocation> getRightClickItemUsage() {
+            return rightClickItemUsage;
+        }
+
+        public boolean addRightClickItemUsage(ResourceLocation r) {
+            return this.rightClickItemUsage.add(r);
         }
 
         public Location getStart() {
@@ -466,6 +489,13 @@ public class WorldRegionManager extends ConfigurableManager {
                 if (members.size() > 0) {
                     result.add("members", members);
                 }
+            }
+            if (!this.rightClickItemUsage.isEmpty()) {
+                JsonArray items = new JsonArray();
+                for (ResourceLocation resourceLocation : this.rightClickItemUsage) {
+                    items.add(String.valueOf(resourceLocation));
+                }
+                result.add("rightClickItemUsage", items);
             }
             return result;
         }
