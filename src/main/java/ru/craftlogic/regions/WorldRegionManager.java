@@ -63,7 +63,7 @@ public class WorldRegionManager extends ConfigurableManager {
     public Region createRegion(Location start, Location end, UUID owner) {
         UUID id;
         while (regions.containsKey(id = UUID.randomUUID())) {}
-        Region region = new Region(id, owner, start, end, defaultPvP, false, false, false, false, false, true, true, false, new HashSet<>(), new HashMap<>());
+        Region region = new Region(id, owner, start, end, defaultPvP, false, false, false, false, true, false, true, true, false, new HashSet<>(), new HashMap<>());
         regions.put(id, region);
         setDirty(true);
         return region;
@@ -126,7 +126,7 @@ public class WorldRegionManager extends ConfigurableManager {
         final Map<UUID, Set<RegionAbility>> members;
         public Set<ResourceLocation> rightClickItemUsage;
         final Location start, end;
-        boolean explosions, pvp, restrictCommands, projectiles, protectingHostiles, preventingMobAttacks, mobSpawn, fallDamage, teleportSpawn;
+        boolean explosions, pvp, restrictCommands, projectiles, protectingHostiles, preventingAnimalAttacks, preventingMobAttacks, mobSpawn, fallDamage, teleportSpawn;
 
         public Region(Dimension dimension, UUID id, JsonObject root) {
             this(id,
@@ -139,6 +139,7 @@ public class WorldRegionManager extends ConfigurableManager {
                 JsonUtils.getBoolean(root, "projectiles", false),
                 JsonUtils.getBoolean(root, "protectingHostiles", false),
                 JsonUtils.getBoolean(root, "preventingMobAttacks", false),
+                JsonUtils.getBoolean(root, "preventingAnimalAttacks", true),
                 JsonUtils.getBoolean(root, "mobSpawn", true),
                 JsonUtils.getBoolean(root, "fallDamage", true),
                 JsonUtils.getBoolean(root, "teleportSpawn", false),
@@ -147,7 +148,7 @@ public class WorldRegionManager extends ConfigurableManager {
             );
         }
 
-        public Region(UUID id, UUID owner, Location start, Location end, boolean pvp, boolean restrictCommands, boolean explosions, boolean projectiles, boolean protectingHostiles, boolean preventingMobAttacks, boolean mobSpawn, boolean fallDamage, boolean teleportSpawn, Set<ResourceLocation> rightClickItemUsage, Map<UUID, Set<RegionAbility>> members) {
+        public Region(UUID id, UUID owner, Location start, Location end, boolean pvp, boolean restrictCommands, boolean explosions, boolean projectiles, boolean protectingHostiles, boolean preventingAnimalAttacks, boolean preventingMobAttacks, boolean mobSpawn, boolean fallDamage, boolean teleportSpawn, Set<ResourceLocation> rightClickItemUsage, Map<UUID, Set<RegionAbility>> members) {
             this.id = id;
             this.owner = owner;
             this.start = start;
@@ -157,6 +158,7 @@ public class WorldRegionManager extends ConfigurableManager {
             this.projectiles = projectiles;
             this.protectingHostiles = protectingHostiles;
             this.preventingMobAttacks = preventingMobAttacks;
+            this.preventingAnimalAttacks = preventingAnimalAttacks;
             this.explosions = explosions;
             this.mobSpawn = mobSpawn;
             this.fallDamage = fallDamage;
@@ -336,7 +338,7 @@ public class WorldRegionManager extends ConfigurableManager {
         }
 
         public boolean canAttackNeutral(UUID target) {
-            return isOwner(target) || getMemberAbilities(target).contains(RegionAbility.ATTACK_NEUTRAL);
+            return isOwner(target) || preventingAnimalAttacks || getMemberAbilities(target).contains(RegionAbility.ATTACK_NEUTRAL);
         }
 
         public boolean canLaunchProjectiles(OfflinePlayer target) {
@@ -426,6 +428,14 @@ public class WorldRegionManager extends ConfigurableManager {
             this.preventingMobAttacks = preventingMobAttacks;
         }
 
+        public boolean isPreventingAnimalAttacks() {
+            return preventingAnimalAttacks;
+        }
+
+        public void setPreventingAnimalAttacks(boolean preventingAnimalAttacks) {
+            this.preventingAnimalAttacks = preventingAnimalAttacks;
+        }
+
         /**A better method name, maybe?*/
         public boolean isExplosions() {
             return explosions;
@@ -462,6 +472,9 @@ public class WorldRegionManager extends ConfigurableManager {
             }
             if (preventingMobAttacks) {
                 result.addProperty("preventingMobAttacks", true);
+            }
+            if (preventingAnimalAttacks) {
+                result.addProperty("preventingAnimalAttacks", true);
             }
             if (protectingHostiles) {
                 result.addProperty("protectingHostiles", true);

@@ -735,7 +735,7 @@ public class RegionManager extends ConfigurableManager {
         }
     }
 
-    private void checkTeleport(net.minecraftforge.event.entity.player.PlayerEvent event, Player player) {
+    private void checkTeleport(PlayerEvent event, Player player) {
         Region region = getRegion(new Location(player.getEntity()));
         if (region != null && region.restrictCommands && !player.hasPermission("region.commands")) {
             event.setCanceled(true);

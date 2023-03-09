@@ -21,7 +21,7 @@ import java.util.*;
 public class CommandRegion extends CommandBase {
     public CommandRegion() {
         super("region", 1,
-            "pvp|hostiles|mob_attacks|explosions|projectiles|mob_spawn|fall_damage|teleport_spawn|commands|rightClickItemUsage",
+            "pvp|hostiles|animal_attacks|mob_attacks|explosions|projectiles|mob_spawn|fall_damage|teleport_spawn|commands|item_use",
             "expel|transfer <target:OfflinePlayer>",
             "list",
             "list <target:OfflinePlayer>",
@@ -219,6 +219,9 @@ public class CommandRegion extends CommandBase {
                             ? ctx.senderAsPlayer().getWorld()
                             : error("commands.region.list.world");
                     OfflinePlayer target = ctx.senderAsOfflinePlayerOrArg("target");
+                    if (sender != target && !sender.hasPermission("commands.region.list.other")) {
+                        throw new CommandException("commands.generic.permission");
+                    }
                     List<Region> regions = regionManager.getPlayerRegions(target, world);
                     if (regions.isEmpty()) {
                         ctx.sendMessage(Text.translation("commands.region.list.none" + (target == sender ? ".you" : "")).red());
@@ -263,15 +266,18 @@ public class CommandRegion extends CommandBase {
                     }
                     break;
                 }
-                case "rightClickItemUsage": {
+                case "item_use": {
                     Player sender = ctx.senderAsPlayer();
-                    if (ctx.checkPermission(true, "commands.region.admin.rightClickItemUsage", 2)) {
+                    if (ctx.checkPermission(true, "commands.region.admin.item_use", 2)) {
                         ItemStack item = sender.getHeldItem(EnumHand.MAIN_HAND);
                         if (item.isEmpty()) {
                             break;
                         }
                         ResourceLocation name = item.getItem().getRegistryName();
                         Region region = regionManager.getRegion(sender.getLocation());
+                        if (region == null) {
+                            break;
+                        }
                         region.addRightClickItemUsage(name);
                     }
                     break;
@@ -299,6 +305,10 @@ public class CommandRegion extends CommandBase {
                 }
                 case "mob_attacks": {
                     booleanFlag(ctx, regionManager, "mob_attacks", Region::isPreventingMobAttacks, Region::setPreventingMobAttacks, false);
+                    break;
+                }
+                case "animal_attacks": {
+                    booleanFlag(ctx, regionManager, "animal_attacks", Region::isPreventingAnimalAttacks, Region::setPreventingAnimalAttacks, true);
                     break;
                 }
                 case "projectiles": {
