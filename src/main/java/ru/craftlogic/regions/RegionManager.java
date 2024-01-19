@@ -935,13 +935,15 @@ public class RegionManager extends ConfigurableManager {
 
     private void checkEntityInteract(EntityPlayer player, Entity target, Event event) {
         Region region = getRegion(new Location(target));
-        if (region != null && !region.canInteractEntities(player.getUniqueID())) {
+        boolean customNpc = target.getClass().getName().endsWith("EntityCustomNpc");
+        boolean isBoat = target instanceof EntityBoat;
+        if (region != null && !region.canInteractEntities(player.getUniqueID()) && !customNpc && !isBoat) {
             event.setCanceled(true);
             if (target instanceof EntityPlayer) {
                 player.sendStatusMessage(Text.translation("chat.region.interact.players").red().build(), true);
             } else if (target instanceof EntityHanging || target instanceof EntityArmorStand) {
                 player.sendStatusMessage(Text.translation("chat.region.interact.hanging").red().build(), true);
-            } else if (target instanceof EntityMinecartEmpty || target instanceof EntityBoat) {
+            } else if (target instanceof EntityMinecartEmpty/* || target instanceof EntityBoat*/) {
                 player.sendStatusMessage(Text.translation("chat.region.interact.transport").red().build(), true);
             } else if (target instanceof INpc) {
                 player.sendStatusMessage(Text.translation("chat.region.interact.npc").red().build(), true);

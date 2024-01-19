@@ -308,7 +308,7 @@ public class CommandRegion extends CommandBase {
                     break;
                 }
                 case "animal_attacks": {
-                    booleanFlag(ctx, regionManager, "animal_attacks", Region::isPreventingAnimalAttacks, Region::setPreventingAnimalAttacks, true);
+                    booleanFlag(ctx, regionManager, "animal_attacks", Region::isPreventingAnimalAttacks, Region::setPreventingAnimalAttacks, false);
                     break;
                 }
                 case "projectiles": {

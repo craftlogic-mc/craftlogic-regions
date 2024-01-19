@@ -338,7 +338,7 @@ public class WorldRegionManager extends ConfigurableManager {
         }
 
         public boolean canAttackNeutral(UUID target) {
-            return isOwner(target) || preventingAnimalAttacks || getMemberAbilities(target).contains(RegionAbility.ATTACK_NEUTRAL);
+            return isOwner(target) || !preventingAnimalAttacks || getMemberAbilities(target).contains(RegionAbility.ATTACK_NEUTRAL);
         }
 
         public boolean canLaunchProjectiles(OfflinePlayer target) {
@@ -473,8 +473,8 @@ public class WorldRegionManager extends ConfigurableManager {
             if (preventingMobAttacks) {
                 result.addProperty("preventingMobAttacks", true);
             }
-            if (preventingAnimalAttacks) {
-                result.addProperty("preventingAnimalAttacks", true);
+            if (!preventingAnimalAttacks) {
+                result.addProperty("preventingAnimalAttacks", false);
             }
             if (protectingHostiles) {
                 result.addProperty("protectingHostiles", true);
